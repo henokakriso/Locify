@@ -1,0 +1,149 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * LOCIFY CLI — administrative tool.
+ *
+ * Commands:
+ *   php bin/locify db:setup            Load schema + seed
+ *   php bin/locify admin:create        Create a system administrator account
+ *   php bin/locify admin:user <name>   Create an officer account (interactive)
+ *   php bin/locify payments:reconcile  Run payment reconciliation
+ *   php bin/locify test:calendar       Run calendar conversion tests
+ */
+
+require __DIR__ . '/../config/config.php';
+require __DIR__ . '/../app/helpers/functions.php';
+require __DIR__ . '/../app/helpers/Calendar.php';
+require __DIR__ . '/../app/security/Crypto.php';
+require __DIR__ . '/../app/security/Jwt.php';
+require __DIR__ . '/../app/core/Database.php';
+
+$command = $argv[1] ?? 'help';
+
+function dbConnection(): PDO
+{
+    $db = Config::get('db');
+    $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=%s', $db['host'], $db['port'], $db['name'], $db['charset']);
+    return new PDO($dsn, $db['user'], $db['pass'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+}
+
+function runSqlFile(PDO $pdo, string $file): void
+{
+    if (!is_readable($file)) {
+        fwrite(STDERR, "File not found: $file\n");
+        exit(1);
+    }
+    $sql = file_get_contents($file);
+    $sql = implode("\n", array_filter(explode("\n", $sql), fn($line) => !str_starts_with(trim($line), '--')));
+    $statements = array_filter(array_map('trim', explode(";\n", $sql)), fn($s) => $s !== '');
+    foreach ($statements as $statement) {
+        try {
+            $pdo->exec($statement);
+        } catch (PDOException $e) {
+            $code = (string)$e->getCode();
+            if (in_array($code, ['42S01', '1050'], true)) {
+                continue; // table already exists
+            }
+            if (preg_match('/^CREATE INDEX/', $statement) && $code === '42000') {
+                if (stripos($e->getMessage(), 'Duplicate key name') !== false) {
+                    continue; // index already exists
+                }
+            }
+            if (preg_match('/^CREATE TRIGGER/', $statement) && stripos($e->getMessage(), 'already exists') !== false) {
+                continue; // trigger already exists
+            }
+            throw $e;
+        }
+    }
+}
+
+switch ($command) {
+    case 'db:setup':
+        $pdo = dbConnection();
+        echo "Loading schema...\n";
+        runSqlFile($pdo, LOCIFY_ROOT . '/database/schema.sql');
+        echo "Loading seed data...\n";
+        runSqlFile($pdo, LOCIFY_ROOT . '/database/seeds/seed.sql');
+        foreach (glob(LOCIFY_ROOT . '/database/migrations/*.sql') ?: [] as $migration) {
+            printf("Loading migration %s ...\n", basename($migration));
+            runSqlFile($pdo, $migration);
+        }
+        echo "Database ready.\n";
+        break;
+
+    case 'admin:create':
+        $username = readline('Username: ') ?: '';
+        $password = '';
+        system('stty -echo 2>/dev/null');
+        $password = (string)readline('Password (12+ chars): ');
+        system('stty echo 2>/dev/null');
+        echo "\n";
+        if (strlen($password) < 12) {
+            fwrite(STDERR, "Password too short.\n");
+            exit(1);
+        }
+        $unit = Database::fetchOne(
+            "SELECT id FROM admin_unit WHERE type = 'federal' AND status = 'active' ORDER BY created_at LIMIT 1"
+        );
+        $role = Database::fetchOne("SELECT id FROM role WHERE name = 'system_admin'");
+        if ($unit === null || $role === null) {
+            fwrite(STDERR, "Run db:setup first.\n");
+            exit(1);
+        }
+        $userId = uuid4();
+        $usernameHash = hash('sha256', $username);
+        $existing = Database::fetchOne('SELECT id FROM `user` WHERE username_hash = ?', [$usernameHash]);
+        Database::transaction(function () use ($userId, $existing, $usernameHash, $password, $unit, $role) {
+            $passwordHash = password_hash($password, PASSWORD_ARGON2ID);
+            if ($existing !== null) {
+                Database::run(
+                    'UPDATE `user` SET password_hash = ?, status = ?, mfa_enabled = 1 WHERE id = ?',
+                    [$passwordHash, 'active', $existing['id']]
+                );
+                Database::run(
+                    'INSERT IGNORE INTO user_role (user_id, role_id, admin_unit_id) VALUES (?, ?, ?)',
+                    [$existing['id'], $role['id'], $unit['id']]
+                );
+                return;
+            }
+            Database::run(
+                'INSERT INTO `user` (id, username_hash, password_hash, status, mfa_enabled)
+                 VALUES (?, ?, ?, ?, 1)',
+                [$userId, $usernameHash, $passwordHash, 'active']
+            );
+            Database::run(
+                'INSERT INTO user_role (user_id, role_id, admin_unit_id) VALUES (?, ?, ?)',
+                [$userId, $role['id'], $unit['id']]
+            );
+        });
+        echo "System administrator '$username' ready.\n";
+        break;
+
+    case 'payments:reconcile':
+        require LOCIFY_ROOT . '/app/services/PaymentService.php';
+        $result = PaymentService::reconcile();
+        echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
+        break;
+
+    case 'test:calendar':
+        $checks = [
+            [2000, 1, 1, '2007-09-11'],
+            [2000, 4, 29, '2008-01-07'],
+            [2014, 7, 26, '2022-04-04'],
+        ];
+        foreach ($checks as [$y, $m, $d, $expected]) {
+            $got = Calendar::ethToGregDate($y, $m, $d);
+            echo ($got === $expected ? 'PASS' : 'FAIL') . " $y/$m/$d E.C. => $got (expected $expected)\n";
+        }
+        break;
+
+    default:
+        echo "LOCIFY CLI — Project ARWE\n\n"
+            . "  php bin/locify db:setup\n"
+            . "  php bin/locify admin:create\n"
+            . "  php bin/locify payments:reconcile\n"
+            . "  php bin/locify test:calendar\n";
+}

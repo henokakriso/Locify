@@ -1,0 +1,35 @@
+# Apache virtual host configuration for LOCIFY
+# Route all traffic through public/index.php (front controller).
+
+<VirtualHost *:80>
+    ServerName locify.local
+    DocumentRoot /var/www/locify/public
+
+    <Directory /var/www/locify/public>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+
+        # Front controller
+        RewriteEngine On
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteRule ^ index.php [QSA,L]
+    </Directory>
+
+    # Never serve application internals
+    <DirectoryMatch "^/var/www/locify/(app|api|config|database|storage|views|bin)">
+        Require all denied
+    </DirectoryMatch>
+
+    ErrorLog ${APACHE_LOG_DIR}/locify-error.log
+    CustomLog ${APACHE_LOG_DIR}/locify-access.log combined
+
+    # Production: enable TLS 1.3 and redirect HTTP → HTTPS
+    # ServerName locify.gov.et
+    # Redirect permanent / https://locify.gov.et/
+</VirtualHost>
+
+# Production TLS example (terminate at Apache or Nginx):
+#   SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
+#   SSLCipherSuite ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
