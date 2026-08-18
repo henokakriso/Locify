@@ -1,18 +1,18 @@
 # ARWE Public Source License (ARWE-PSL) v1.0
 
-__Copyright © 2026 Henok Akriso. All rights reserved.__  
-__Developer / Project Alias: Sergio__  
-__Founder of Halziz__
+Copyright © 2026 Henok Akriso. All rights reserved.
+Developer / Project Alias: Sergio
+Founder of Halziz
 
 ---
 
 ## 1. Purpose
 
-The ARWE Public Source License (ARWE-PSL) is a custom software license created by __Henok Akriso__, also known as __Sergio__, to permit broad use, modification, integration, distribution, and commercial use of software while preserving the identity, authorship, copyright, and trademarks of the original creator.
+The ARWE Public Source License (ARWE-PSL) is a custom software license created by Henok Akriso, also known as Sergio, to permit broad use, modification, integration, distribution, and commercial use of software while preserving the identity, authorship, copyright, and trademarks of the original creator.
 
 This License grants substantial freedom to users while requiring appropriate attribution and prohibiting the removal, alteration, or falsification of original authorship information.
 
-This section establishes the license's overall character. It is a custom license, not an OSI-approved standard license. It grants broad permissions for use, modification, integration, distribution, and commercial exploitation. At the same time, it imposes mandatory attribution and protects the original author's identity and trademarks. In practical terms, this means the license is not a simple public-domain dedication and not a restrictive copyleft license; it sits between permissive licenses like MIT and protective licenses like Apache 2.0 with stronger attribution and trademark safeguards. The reference to custom license means its terms are specific to the author and project, and users should read the entire document because standard assumptions from other licenses may not apply.
+This license is a custom license, not an OSI-approved standard license. It grants broad permissions for use, modification, integration, distribution, and commercial exploitation. At the same time, it imposes mandatory attribution and protects the original author's identity and trademarks. In practical terms, this license is not a simple public-domain dedication and not a restrictive copyleft license; it sits between permissive licenses like MIT and protective licenses like Apache 2.0 with stronger attribution and trademark safeguards. Because the terms are specific to the author and project, users should read the entire document; standard assumptions from other licenses may not apply.
 
 ---
 
@@ -22,14 +22,14 @@ This section establishes the license's overall character. It is a custom license
 
 Software means the source code, compiled code, documentation, configuration files, scripts, assets, examples, and other materials distributed under this License.
 
-The definition of Software is intentionally broad. It covers not only human-readable source code but also compiled binaries, documentation, configuration files, scripts, assets, examples, and any other materials distributed with the project. This breadth ensures that all parts of a project are governed by the same terms, preventing a user from taking code but ignoring license obligations for related documentation or assets.
+This definition is intentionally broad. It covers not only human-readable source code but also compiled binaries, documentation, configuration files, scripts, assets, examples, and any other materials distributed with the project. This breadth ensures that all parts of a project are governed by the same terms, preventing a user from taking code but ignoring license obligations for related documentation or assets.
 
 ### 2.2 Original Author
 
 Original Author means:
 
-__Henok Akriso__  
-__Developer / Project Alias: Sergio__
+Henok Akriso
+Developer / Project Alias: Sergio
 
 The Original Author is identified as Henok Akriso, with the developer alias Sergio. This dual identification matters because attribution obligations require both the legal name and the alias to be preserved where reasonably possible. It also protects the author's personal and professional identity.
 
@@ -49,7 +49,7 @@ A derivative work includes any version of the Software that has been modified, e
 
 Attribution means appropriate credit identifying the Original Author and, where reasonably possible, the original Project.
 
-Attribution is defined as appropriate credit to the Original Author and, where reasonably possible, to the original Project. This means users must give credit to Henok Akriso and, when practical, to the project name. The term appropriate is flexible to allow different kinds of software to use different reasonable methods of credit, as explained in Section 9.
+Attribution is defined as appropriate credit to the Original Author and, where reasonably possible, to the original Project. This means users must give credit to Henok Akriso and, when practical, to the project name. The term "appropriate" is flexible to allow different kinds of software to use different reasonable methods of credit, as explained in Section 9.
 
 ### 2.6 Trademark
 
@@ -143,13 +143,13 @@ You may:
 8. Create a private derivative.
 9. Create a closed-source derivative.
 
-However, you __MUST NOT remove, alter, obscure, or falsify existing copyright or authorship notices belonging to the Original Author or existing contributors.__
+However, you MUST NOT remove, alter, obscure, or falsify existing copyright or authorship notices belonging to the Original Author or existing contributors.
 
 You may add your own copyright notice for your original modifications.
 
 For example:
 
-> Original Software Copyright © 2026 Henok Akriso.  
+> Original Software Copyright © 2026 Henok Akriso.
 > Modifications Copyright © 2027 Example Company.
 
 This section separates modification rights from attribution obligations. You may modify the Software extensively, including creating forks, commercial derivatives, private derivatives, and closed-source derivatives. However, you cannot remove, alter, obscure, or falsify existing copyright or authorship notices. You may add your own copyright notice for your original modifications, as shown in the example. This means the original author's notice must remain alongside any new notices, ensuring a clear chain of authorship.
@@ -162,9 +162,9 @@ If you distribute, publish, deploy, sell, or publicly present the Software or a 
 
 The following attribution must remain substantially intact:
 
-> __Copyright © 2026 Henok Akriso. All rights reserved.__  
-> __Developer / Project Alias: Sergio__  
-> __Founder of Halziz__
+> Copyright © 2026 Henok Akriso. All rights reserved.
+> Developer / Project Alias: Sergio
+> Founder of Halziz
 
 Where practical, attribution should also identify the original Project.
 
@@ -172,13 +172,13 @@ For example:
 
 > Based on software created by Henok Akriso (Sergio).
 
-Attribution is mandatory whenever the Software or a derivative work is distributed, published, deployed, sold, or publicly presented. The required attribution block must remain substantially intact, meaning the copyright line, developer alias, and founder reference should not be removed or altered in a way that hides the original authorship. Where practical, the original project name should also be identified. A simple statement such as Based on software created by Henok Akriso (Sergio) is acceptable in addition to the full attribution block.
+Attribution is mandatory whenever the Software or a derivative work is distributed, published, deployed, sold, or publicly presented. The required attribution block must remain substantially intact, meaning the copyright line, developer alias, and founder reference should not be removed or altered in a way that hides the original authorship. Where practical, the original project name should also be identified. A simple statement such as "Based on software created by Henok Akriso (Sergio)" is acceptable in addition to the full attribution block.
 
 ---
 
 ## 8. Preservation of Author Information
 
-You __MUST NOT__:
+You MUST NOT:
 
 1. Remove the Original Author's name.
 2. Replace the Original Author's name with another person's name.
@@ -311,7 +311,7 @@ This section makes an important distinction between copyright and trademark. A c
 
 ## 15. Trademark Restrictions
 
-You __MUST NOT__ use the Original Project's trademark or branding in a manner that:
+You MUST NOT use the Original Project's trademark or branding in a manner that:
 
 1. Suggests your product is official.
 2. Suggests endorsement by Henok Akriso.
@@ -330,15 +330,15 @@ You may not state:
 
 unless you have received explicit authorization.
 
-This section lists prohibited uses of the Original Project's trademark or branding. You cannot suggest that your product is official, endorsed, sponsored, or operated by Henok Akriso or Halziz, or create confusion about the source of your product. You also cannot claim ownership of the Original Project's brand. You may truthfully state Based on [Original Project] but you may not state Official [Original Project] without explicit authorization. This protects the original project's reputation and identity.
+This section lists prohibited uses of the Original Project's trademark or branding. You cannot suggest that your product is official, endorsed, sponsored, or operated by Henok Akriso or Halziz, or create confusion about the source of your product. You also cannot claim ownership of the Original Project's brand. You may truthfully state "Based on [Original Project]" but you may not state "Official [Original Project]" without explicit authorization. This protects the original project's reputation and identity.
 
 ---
 
 ## 16. Halziz Branding
 
-The name __Halziz__, its logos, visual identity, and associated trademarks are not licensed under this Software License.
+The name Halziz, its logos, visual identity, and associated trademarks are not licensed under this Software License.
 
-Use of Software created by Henok Akriso does not grant permission to use __Halziz__ as a company name, product name, service name, logo, or official branding.
+Use of Software created by Henok Akriso does not grant permission to use Halziz as a company name, product name, service name, logo, or official branding.
 
 Permission to use Halziz branding must be obtained separately where required.
 
@@ -409,7 +409,7 @@ This section makes clear that legitimate security research, vulnerability analys
 
 ## 21. No Warranty
 
-THE SOFTWARE IS PROVIDED __AS IS__, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE ORIGINAL AUTHOR DISCLAIMS WARRANTIES INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, SECURITY, ACCURACY, AND AVAILABILITY.
 
@@ -496,6 +496,8 @@ Any patent rights associated with the Software remain subject to applicable law 
 
 This section clarifies that the license does not grant a patent license. Except for rights that may be unavoidable under applicable law, any patent rights associated with the Software remain subject to applicable law and separate agreements. This means users should not assume they have patent rights simply because they have a copyright license.
 
+> NOTE: NO PATENT GRANT DOES NOT MEAN YOU CANNOT USE THE SOFTWARE. IT DOES NOT MEAN THE SOFTWARE IS COPYRIGHTED AND BLOCKED FROM USE, AND IT DOES NOT MEAN YOU CANNOT USE THE SOFTWARE COMMERCIALLY. IT MEANS THE PATENT IS NOT YOUR INNOVATION — THE PATENT RIGHTS REMAIN WITH THE ORIGINAL AUTHOR. YOU MAY STILL USE, MODIFY, SELL, AND DISTRIBUTE THE SOFTWARE AS PERMITTED BY THIS LICENSE, AND YOU MAY USE IT COMMERCIALLY, PROVIDED YOU USE IT EXPLICITLY WITH THIS UNDERSTANDING. HOWEVER, THE PATENT IS NOT YOURS, SO YOU MUST ALWAYS MENTION THE AUTHOR — HENOK AKRISO — IN ACCORDANCE WITH THE ATTRIBUTION REQUIREMENTS OF THIS LICENSE.
+
 ---
 
 ## 27. Governing Law
@@ -534,46 +536,46 @@ Every distribution of the Software should retain a copy of this License.
 
 The recommended copyright notice is:
 
-> __Copyright © 2026 Henok Akriso. All rights reserved.__  
-> __Developer / Project Alias: Sergio__  
-> __Founder of Halziz__
+> Copyright © 2026 Henok Akriso. All rights reserved.
+> Developer / Project Alias: Sergio
+> Founder of Halziz
 
 The recommended license notice is:
 
 > Licensed under the ARWE Public Source License (ARWE-PSL) v1.0.
 
-This section specifies the required notices. Every distribution of the Software should retain a copy of the license. The recommended copyright notice and license notice are provided. While the word recommended is used, earlier sections make attribution mandatory, so these notices should be included in practice to comply with the license.
+This section specifies the required notices. Every distribution of the Software should retain a copy of the license. The recommended copyright notice and license notice are provided. While the word "recommended" is used, earlier sections make attribution mandatory, so these notices should be included in practice to comply with the license.
 
 ---
 
 ## 31. License Summary
 
-| Right / Requirement                   | ARWE-PSL v1.0 |
-| ------------------------------------- | ------------- |
-| Personal use                          | Allowed       |
-| Educational use                       | Allowed       |
-| Research use                          | Allowed       |
-| Government use                        | Allowed       |
-| Commercial use                        | Allowed       |
-| Commercial redistribution             | Allowed       |
-| Modification                          | Allowed       |
-| Commercial modification               | Allowed       |
-| Closed-source software                | Allowed       |
-| SaaS / cloud use                      | Allowed       |
-| Forks                                 | Allowed       |
-| Selling derivatives                   | Allowed       |
-| Attribution                           | Required      |
-| Preserve original author              | Required      |
-| Remove original copyright             | Prohibited    |
-| Change original author                | Prohibited    |
-| Claim original authorship             | Prohibited    |
-| Remove license                        | Prohibited    |
-| Use original trademark as your own    | Prohibited    |
-| Imply official endorsement            | Prohibited    |
-| Halziz trademark granted              | No            |
-| Original project branding granted     | No            |
-| Royalties for ordinary commercial use | None          |
-| Separate commercial license required  | No            |
+| Right / Requirement | ARWE-PSL v1.0 |
+| ------------------- | ------------- |
+| Personal use | Allowed |
+| Educational use | Allowed |
+| Research use | Allowed |
+| Government use | Allowed |
+| Commercial use | Allowed |
+| Commercial redistribution | Allowed |
+| Modification | Allowed |
+| Commercial modification | Allowed |
+| Closed-source software | Allowed |
+| SaaS / cloud use | Allowed |
+| Forks | Allowed |
+| Selling derivatives | Allowed |
+| Attribution | Required |
+| Preserve original author | Required |
+| Remove original copyright | Prohibited |
+| Change original author | Prohibited |
+| Claim original authorship | Prohibited |
+| Remove license | Prohibited |
+| Use original trademark as your own | Prohibited |
+| Imply official endorsement | Prohibited |
+| Halziz trademark granted | No |
+| Original project branding granted | No |
+| Royalties for ordinary commercial use | None |
+| Separate commercial license required | No |
 
 This table provides a quick-reference summary of the license. It is not a substitute for the full license text. The summary shows that the license is highly permissive: personal, educational, research, government, and commercial use are allowed, as are modification, redistribution, closed-source derivatives, forks, and selling derivatives. Attribution and preservation of the original author are required. Removing copyright notices, changing the original author, claiming original authorship, removing the license, using trademarks as your own, and implying official endorsement are prohibited. Halziz trademark and original project branding are not granted. No royalties are required for ordinary commercial use, and no separate commercial license is required. If there is any conflict between this summary and the full license text, the full text controls.
 
@@ -583,29 +585,29 @@ This table provides a quick-reference summary of the license. It is not a substi
 
 The ARWE Public Source License is based on four principles:
 
-__USE IT.__
+USE IT.
 
 You may use the Software personally, commercially, academically, institutionally, or operationally.
 
-__BUILD ON IT.__
+BUILD ON IT.
 
 You may modify, extend, integrate, fork, and create new software from it.
 
-__SELL IT.__
+SELL IT.
 
 You may commercially distribute products and services containing the Software without paying royalties solely for that use.
 
-__CREDIT THE CREATOR.__
+CREDIT THE CREATOR.
 
 You may not erase, replace, falsify, or conceal the original author's attribution.
 
 The Software may be changed.
 
-__The original authorship may not be rewritten.__
+The original authorship may not be rewritten.
 
 The Software may be commercially used.
 
-__The original creator's identity and trademarks remain protected.__
+The original creator's identity and trademarks remain protected.
 
 This section distills the license into four core principles: use it, build on it, sell it, and credit the creator. The Software may be changed, but the original authorship may not be rewritten. The Software may be commercially used, but the original creator's identity and trademarks remain protected. This section serves as a moral and practical summary of the license's intent.
 
@@ -634,10 +636,10 @@ This section distills the license into four core principles: use it, build on it
 
 ---
 
-__Copyright © 2026 Henok Akriso. All rights reserved.__
+Copyright © 2026 Henok Akriso. All rights reserved.
 
-__Developer / Project Alias: Sergio__
+Developer / Project Alias: Sergio
 
-__Founder of Halziz__
+Founder of Halziz
 
-__ARWE-PSL v1.0__
+ARWE-PSL v1.0
