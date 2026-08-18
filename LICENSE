@@ -1,4 +1,4 @@
-=== ARWE Public Source License (ARWE-PSL) v1.0 ===
+ARWE Public Source License (ARWE-PSL) v1.0
 
 Copyright © 2026 Henok Akriso. All rights reserved.
 Developer / Project Alias: Sergio
@@ -6,7 +6,7 @@ Founder of Halziz
 
 ---
 
-**1. Purpose**
+1. Purpose
 
 The ARWE Public Source License (ARWE-PSL) is a custom software license created by Henok Akriso, also known as Sergio, to permit broad use, modification, integration, distribution, and commercial use of software while preserving the identity, authorship, copyright, and trademarks of the original creator.
 
@@ -16,15 +16,15 @@ This license is a custom license, not an OSI-approved standard license. It grant
 
 ---
 
-**2. Definitions**
+2. Definitions
 
-**2.1 Software**
+2.1 Software
 
 Software means the source code, compiled code, documentation, configuration files, scripts, assets, examples, and other materials distributed under this License.
 
 This definition is intentionally broad. It covers not only human-readable source code but also compiled binaries, documentation, configuration files, scripts, assets, examples, and any other materials distributed with the project. This breadth ensures that all parts of a project are governed by the same terms, preventing a user from taking code but ignoring license obligations for related documentation or assets.
 
-**2.2 Original Author**
+2.2 Original Author
 
 Original Author means:
 
@@ -33,25 +33,25 @@ Developer / Project Alias: Sergio
 
 The Original Author is identified as Henok Akriso, with the developer alias Sergio. This dual identification matters because attribution obligations require both the legal name and the alias to be preserved where reasonably possible. It also protects the author's personal and professional identity.
 
-**2.3 Project**
+2.3 Project
 
 Project means the software project distributed together with this License.
 
 Project refers to the specific software project that carries this license. It is not a general reference to any software. This term is used throughout the license to distinguish the original work from forks, derivatives, and unrelated projects.
 
-**2.4 Derivative Work**
+2.4 Derivative Work
 
 Derivative Work means a modified, extended, adapted, translated, integrated, or otherwise altered version of the Software.
 
 A derivative work includes any version of the Software that has been modified, extended, adapted, translated, integrated into another system, or altered in any way. This definition is important because the license's attribution and preservation requirements apply to derivative works, not just verbatim copies. It also clarifies that closed-source derivatives are permitted, but they still carry attribution obligations.
 
-**2.5 Attribution**
+2.5 Attribution
 
 Attribution means appropriate credit identifying the Original Author and, where reasonably possible, the original Project.
 
 Attribution is defined as appropriate credit to the Original Author and, where reasonably possible, to the original Project. This means users must give credit to Henok Akriso and, when practical, to the project name. The term "appropriate" is flexible to allow different kinds of software to use different reasonable methods of credit, as explained in Section 9.
 
-**2.6 Trademark**
+2.6 Trademark
 
 Trademark includes names, logos, symbols, marks, service marks, product names, project names, visual identities, and other branding associated with the Original Author, Halziz, or the Project.
 
@@ -59,7 +59,7 @@ Trademark is defined broadly to cover all forms of branding, including names, lo
 
 ---
 
-**3. Copyright Ownership**
+3. Copyright Ownership
 
 The Software remains the intellectual property of the Original Author and its respective contributors.
 
@@ -73,7 +73,7 @@ This section confirms that copyright ownership does not change just because the 
 
 ---
 
-**4. Permission Grant**
+4. Permission Grant
 
 Subject to compliance with this License, permission is granted, free of charge, to any person obtaining a copy of the Software to:
 
@@ -102,7 +102,7 @@ Section 4 is the core grant. It gives a free, worldwide, non-exclusive, royalty-
 
 ---
 
-**5. Commercial Use**
+5. Commercial Use
 
 Commercial use is expressly permitted.
 
@@ -127,7 +127,7 @@ This section removes any doubt about commercial use. It allows the Software to b
 
 ---
 
-**6. Modification**
+6. Modification
 
 You may modify the Software for any lawful purpose.
 
@@ -149,34 +149,34 @@ You may add your own copyright notice for your original modifications.
 
 For example:
 
-**Original Software Copyright © 2026 Henok Akriso.**
-**Modifications Copyright © 2027 Example Company.**
+Original Software Copyright © 2026 Henok Akriso.
+Modifications Copyright © 2027 Example Company.
 
 This section separates modification rights from attribution obligations. You may modify the Software extensively, including creating forks, commercial derivatives, private derivatives, and closed-source derivatives. However, you cannot remove, alter, obscure, or falsify existing copyright or authorship notices. You may add your own copyright notice for your original modifications, as shown in the example. This means the original author's notice must remain alongside any new notices, ensuring a clear chain of authorship.
 
 ---
 
-**7. Mandatory Attribution**
+7. Mandatory Attribution
 
 If you distribute, publish, deploy, sell, or publicly present the Software or a Derivative Work, you must preserve appropriate attribution to the Original Author.
 
 The following attribution must remain substantially intact:
 
-**Copyright © 2026 Henok Akriso. All rights reserved.**
-**Developer / Project Alias: Sergio**
-**Founder of Halziz**
+Copyright © 2026 Henok Akriso. All rights reserved.
+Developer / Project Alias: Sergio
+Founder of Halziz
 
 Where practical, attribution should also identify the original Project.
 
 For example:
 
-**Based on software created by Henok Akriso (Sergio).**
+Based on software created by Henok Akriso (Sergio).
 
 Attribution is mandatory whenever the Software or a derivative work is distributed, published, deployed, sold, or publicly presented. The required attribution block must remain substantially intact, meaning the copyright line, developer alias, and founder reference should not be removed or altered in a way that hides the original authorship. Where practical, the original project name should also be identified. A simple statement such as "Based on software created by Henok Akriso (Sergio)" is acceptable in addition to the full attribution block.
 
 ---
 
-**8. Preservation of Author Information**
+8. Preservation of Author Information
 
 You MUST NOT:
 
@@ -195,7 +195,7 @@ This section prohibits specific actions that would erase or falsify the original
 
 ---
 
-**9. Attribution Placement**
+9. Attribution Placement
 
 Attribution may be provided in a reasonable location appropriate to the type of Software.
 
@@ -219,7 +219,7 @@ This section gives flexibility about where to place attribution, recognizing tha
 
 ---
 
-**10. Closed-Source and Proprietary Software**
+10. Closed-Source and Proprietary Software
 
 You may incorporate the Software into proprietary or closed-source software.
 
@@ -231,7 +231,7 @@ This section confirms that the license is not copyleft. You can incorporate the 
 
 ---
 
-**11. SaaS and Cloud Use**
+11. SaaS and Cloud Use
 
 You may use the Software in:
 
@@ -251,7 +251,7 @@ This section addresses the use of Software in SaaS and cloud environments. It al
 
 ---
 
-**12. Redistribution**
+12. Redistribution
 
 You may redistribute the original Software or Derivative Works commercially or non-commercially.
 
@@ -271,7 +271,7 @@ This section governs redistribution. You may redistribute the Software or deriva
 
 ---
 
-**13. Forks**
+13. Forks
 
 You may create forks of the Software.
 
@@ -287,7 +287,7 @@ This section specifically permits forking. You can create a fork, modify it, ren
 
 ---
 
-**14. Project Names and Branding**
+14. Project Names and Branding
 
 Copyright permission does not grant permission to use the Original Project's branding.
 
@@ -309,7 +309,7 @@ This section makes an important distinction between copyright and trademark. A c
 
 ---
 
-**15. Trademark Restrictions**
+15. Trademark Restrictions
 
 You MUST NOT use the Original Project's trademark or branding in a manner that:
 
@@ -322,11 +322,11 @@ You MUST NOT use the Original Project's trademark or branding in a manner that:
 
 You may truthfully state:
 
-**Based on [Original Project].**
+Based on [Original Project].
 
 You may not state:
 
-**Official [Original Project]**
+Official [Original Project]
 
 unless you have received explicit authorization.
 
@@ -334,7 +334,7 @@ This section lists prohibited uses of the Original Project's trademark or brandi
 
 ---
 
-**16. Halziz Branding**
+16. Halziz Branding
 
 The name Halziz, its logos, visual identity, and associated trademarks are not licensed under this Software License.
 
@@ -346,7 +346,7 @@ This section specifically protects the Halziz brand. The name Halziz, its logos,
 
 ---
 
-**17. No False Endorsement**
+17. No False Endorsement
 
 You may not claim or imply that:
 
@@ -362,7 +362,7 @@ This section prohibits false endorsement. You cannot claim or imply that Henok A
 
 ---
 
-**18. Third-Party Software**
+18. Third-Party Software
 
 The Software may contain third-party components.
 
@@ -376,7 +376,7 @@ This section clarifies that the Software may include third-party components, and
 
 ---
 
-**19. Contributions**
+19. Contributions
 
 Unless a separate written agreement states otherwise, contributors retain copyright in their original contributions.
 
@@ -390,7 +390,7 @@ This section governs contributions. Contributors retain copyright in their origi
 
 ---
 
-**20. Security Research**
+20. Security Research
 
 This License does not prohibit legitimate:
 
@@ -407,7 +407,7 @@ This section makes clear that legitimate security research, vulnerability analys
 
 ---
 
-**21. No Warranty**
+21. No Warranty
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -417,7 +417,7 @@ This section is a standard disclaimer of warranty. The Software is provided as i
 
 ---
 
-**22. Limitation of Liability**
+22. Limitation of Liability
 
 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, HENOK AKRISO, SERGIO, HALZIZ, CONTRIBUTORS, AND COPYRIGHT HOLDERS SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR OTHER DAMAGES ARISING FROM:
 
@@ -436,7 +436,7 @@ This section limits liability. To the maximum extent permitted by law, the Origi
 
 ---
 
-**23. License Termination**
+23. License Termination
 
 Your rights under this License automatically terminate if you materially violate its terms.
 
@@ -450,7 +450,7 @@ This section describes termination. If you materially violate the license terms,
 
 ---
 
-**24. License Compliance**
+24. License Compliance
 
 If you discover that your use or distribution violates this License, you should promptly correct the violation.
 
@@ -469,7 +469,7 @@ This section encourages self-correction. If you discover that your use or distri
 
 ---
 
-**25. Reservation of Rights**
+25. Reservation of Rights
 
 All rights not expressly granted by this License are reserved.
 
@@ -488,7 +488,7 @@ This section states that all rights not expressly granted by the license are res
 
 ---
 
-**26. No Patent Grant**
+26. No Patent Grant
 
 Except for any rights that may be unavoidable under applicable law, this License does not grant a patent license.
 
@@ -496,11 +496,11 @@ Any patent rights associated with the Software remain subject to applicable law 
 
 This section clarifies that the license does not grant a patent license. Except for rights that may be unavoidable under applicable law, any patent rights associated with the Software remain subject to applicable law and separate agreements. This means users should not assume they have patent rights simply because they have a copyright license.
 
-**NOTE: NO PATENT GRANT DOES NOT MEAN YOU CANNOT USE THE SOFTWARE. IT DOES NOT MEAN THE SOFTWARE IS COPYRIGHTED AND BLOCKED FROM USE, AND IT DOES NOT MEAN YOU CANNOT USE THE SOFTWARE COMMERCIALLY. IT MEANS THE PATENT IS NOT YOUR INNOVATION — THE PATENT RIGHTS REMAIN WITH THE ORIGINAL AUTHOR. YOU MAY STILL USE, MODIFY, SELL, AND DISTRIBUTE THE SOFTWARE AS PERMITTED BY THIS LICENSE, AND YOU MAY USE IT COMMERCIALLY, PROVIDED YOU USE IT EXPLICITLY WITH THIS UNDERSTANDING. HOWEVER, THE PATENT IS NOT YOURS, SO YOU MUST ALWAYS MENTION THE AUTHOR — HENOK AKRISO — IN ACCORDANCE WITH THE ATTRIBUTION REQUIREMENTS OF THIS LICENSE.**
+NOTE: NO PATENT GRANT DOES NOT MEAN YOU CANNOT USE THE SOFTWARE. IT DOES NOT MEAN THE SOFTWARE IS COPYRIGHTED AND BLOCKED FROM USE, AND IT DOES NOT MEAN YOU CANNOT USE THE SOFTWARE COMMERCIALLY. IT MEANS THE PATENT IS NOT YOUR INNOVATION — THE PATENT RIGHTS REMAIN WITH THE ORIGINAL AUTHOR. YOU MAY STILL USE, MODIFY, SELL, AND DISTRIBUTE THE SOFTWARE AS PERMITTED BY THIS LICENSE, AND YOU MAY USE IT COMMERCIALLY, PROVIDED YOU USE IT EXPLICITLY WITH THIS UNDERSTANDING. HOWEVER, THE PATENT IS NOT YOURS, SO YOU MUST ALWAYS MENTION THE AUTHOR — HENOK AKRISO — IN ACCORDANCE WITH THE ATTRIBUTION REQUIREMENTS OF THIS LICENSE.
 
 ---
 
-**27. Governing Law**
+27. Governing Law
 
 This License shall be interpreted and enforced according to applicable law.
 
@@ -512,7 +512,7 @@ This section addresses governing law. The license is interpreted and enforced ac
 
 ---
 
-**28. Severability**
+28. Severability
 
 If any provision of this License is determined to be invalid or unenforceable, the remaining provisions shall remain effective to the maximum extent permitted by law.
 
@@ -520,7 +520,7 @@ This is a standard severability clause. If any provision of the license is found
 
 ---
 
-**29. Entire License**
+29. Entire License
 
 This License constitutes the terms under which the Software is provided unless a separate written agreement expressly states otherwise.
 
@@ -530,25 +530,25 @@ This section states that the license constitutes the entire terms under which th
 
 ---
 
-**30. License Notice**
+30. License Notice
 
 Every distribution of the Software should retain a copy of this License.
 
 The recommended copyright notice is:
 
-**Copyright © 2026 Henok Akriso. All rights reserved.**
-**Developer / Project Alias: Sergio**
-**Founder of Halziz**
+Copyright © 2026 Henok Akriso. All rights reserved.
+Developer / Project Alias: Sergio
+Founder of Halziz
 
 The recommended license notice is:
 
-**Licensed under the ARWE Public Source License (ARWE-PSL) v1.0.**
+Licensed under the ARWE Public Source License (ARWE-PSL) v1.0.
 
 This section specifies the required notices. Every distribution of the Software should retain a copy of the license. The recommended copyright notice and license notice are provided. While the word "recommended" is used, earlier sections make attribution mandatory, so these notices should be included in practice to comply with the license.
 
 ---
 
-**31. License Summary**
+31. License Summary
 
 | Right / Requirement | ARWE-PSL v1.0 |
 | ------------------- | ------------- |
@@ -581,7 +581,7 @@ This table provides a quick-reference summary of the license. It is not a substi
 
 ---
 
-**32. Core Principle**
+32. Core Principle
 
 The ARWE Public Source License is based on four principles:
 
@@ -613,7 +613,7 @@ This section distills the license into four core principles: use it, build on it
 
 ---
 
-**ARWE-PSL Identity**
+ARWE-PSL Identity
 
 | Field | Value |
 | --- | --- |
