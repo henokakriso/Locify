@@ -6,7 +6,7 @@ declare(strict_types=1);
 
 final class CitizenService
 {
-    public static function create(Request $request, array $data): array
+    public static function create(Request $request, array $data, bool $skipScope = false): array
     {
         $adminUnitId = $data['address']['admin_unit_id']
             ?? Auth::$context['scope_unit']
@@ -14,81 +14,25 @@ final class CitizenService
         if ($adminUnitId === null || !Database::fetchOne('SELECT id FROM admin_unit WHERE id = ?', [$adminUnitId])) {
             Response::validationError(['admin_unit_id' => 'Invalid administrative unit']);
         }
-        Auth::assertInScope($request, $adminUnitId);
+        if (!$skipScope) {
+            Auth::assertInScope($request, $adminUnitId);
+        }
 
         $nationalIdHash = isset($data['national_id']) && $data['national_id'] !== ''
             ? hash('sha256', $data['national_id'])
             : null;
         $phoneHash = isset($data['phone']) && $data['phone'] !== '' ? hash('sha256', $data['phone']) : null;
 
-        if ($nationalIdHash !== null) {
-            $existing = Database::fetchOne(
-                'SELECT id FROM citizen WHERE national_id_hash = ? AND status != ?',
-                [$nationalIdHash, 'archived']
-            );
-            if ($existing !== null) {
-                SecurityEvent::log('duplicate_citizen_detected', 'low', $request, ['national_id_hash' => $nationalIdHash]);
-                Audit::log($request, 'CREATE_CITIZEN', 'citizen', $existing['id'], result: 'denied', reason: 'duplicate national ID');
-                Response::error('DUPLICATE_CITIZEN', 'A citizen with this national ID already exists', 409);
-            }
+        if ($nationalIdHash !== null && self::findDuplicate($nationalIdHash)) {
+            SecurityEvent::log('duplicate_citizen_detected', 'low', $request, ['national_id_hash' => $nationalIdHash]);
+            Audit::log($request, 'CREATE_CITIZEN', 'citizen', null, result: 'denied', reason: 'duplicate national ID');
+            Response::error('DUPLICATE_CITIZEN', 'A citizen with this national ID already exists', 409);
         }
 
-        $id = uuid4();
-        $uuid = uuid4();
-        $dobEth = $data['dob_eth'] ?? null;
-        $dobGreg = $data['dob_greg'] ?? null;
+        $uuid = self::insert($request, $data, $adminUnitId, $nationalIdHash, $phoneHash);
 
-        if ($dobEth !== null && $dobGreg === null) {
-            [$ey, $em, $ed] = array_map('intval', explode('-', (string)$dobEth));
-            $dobGreg = Calendar::ethToGregDate($ey, $em, $ed);
-        }
-
-        Database::run(
-            'INSERT INTO citizen (id, uuid, national_id_hash, national_id_mask,
-                first_name_enc, middle_name_enc, last_name_enc, local_name_enc,
-                dob_eth, dob_greg, sex, phone_hash, email_hash, status, created_by)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [
-                $id,
-                $uuid,
-                $nationalIdHash,
-                isset($data['national_id']) ? maskMiddle((string)$data['national_id']) : null,
-                Crypto::encrypt($data['first_name'] ?? null),
-                Crypto::encrypt($data['middle_name'] ?? null),
-                Crypto::encrypt($data['last_name'] ?? null),
-                Crypto::encrypt($data['local_name'] ?? null),
-                $dobEth,
-                $dobGreg,
-                $data['sex'] ?? null,
-                $phoneHash,
-                isset($data['email']) && $data['email'] !== '' ? hash('sha256', $data['email']) : null,
-                'pending_verification',
-                Auth::$context['user_id'] ?? null,
-            ]
-        );
-
-        if (isset($data['address'])) {
-            Database::run(
-                'INSERT INTO citizen_address (id, citizen_id, admin_unit_id, village_enc, house_no_enc, gps_lat, gps_long, is_primary)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
-                [
-                    uuid4(),
-                    $id,
-                    $adminUnitId,
-                    Crypto::encrypt($data['address']['village'] ?? null),
-                    Crypto::encrypt($data['address']['house_no'] ?? null),
-                    $data['address']['gps_lat'] ?? null,
-                    $data['address']['gps_long'] ?? null,
-                ]
-            );
-        }
-
-        Database::run(
-            'INSERT INTO consent (id, citizen_id, scope, granted) VALUES (?, ?, ?, 1)',
-            [uuid4(), $id, 'identity_verification']
-        );
-
-        Audit::log($request, 'CREATE_CITIZEN', 'citizen', $id, null,
+        $citizenRow = Database::fetchOne('SELECT id FROM citizen WHERE uuid = ?', [$uuid]);
+        Audit::log($request, 'CREATE_CITIZEN', 'citizen', $citizenRow['id'] ?? null, null,
             Audit::mask($data, ['national_id', 'phone', 'email']));
 
         return [
@@ -96,6 +40,169 @@ final class CitizenService
             'status' => 'pending_verification',
             'created_at' => date('c'),
         ];
+    }
+
+    /** Batch import from CSV rows (see CitizenController::import). */
+    public static function bulkCreate(Request $request, array $rows, string $defaultUnitId): array
+    {
+        $created = [];
+        $errors = [];
+        $count = 0;
+        foreach ($rows as $i => $row) {
+            $line = $i + 2; // line 1 is the header
+            if ($count >= (int)Config::get('import.max_rows', 500)) {
+                $errors[] = ['line' => $line, 'error' => 'Import limit reached (500 rows)'];
+                break;
+            }
+            $data = [
+                'national_id' => self::cleanStr($row['national_id'] ?? ''),
+                'first_name' => self::cleanStr($row['first_name'] ?? ''),
+                'middle_name' => self::cleanStr($row['middle_name'] ?? ''),
+                'last_name' => self::cleanStr($row['last_name'] ?? ''),
+                'local_name' => self::cleanStr($row['local_name'] ?? ''),
+                'dob_eth' => self::cleanDate($row['dob_eth'] ?? ''),
+                'sex' => strtoupper(self::cleanStr($row['sex'] ?? '')),
+                'phone' => self::cleanStr($row['phone'] ?? ''),
+                'email' => self::cleanStr($row['email'] ?? ''),
+                'address' => [
+                    'admin_unit_id' => $defaultUnitId,
+                    'village' => self::cleanStr($row['village'] ?? ''),
+                    'house_no' => self::cleanStr($row['house_no'] ?? ''),
+                ],
+            ];
+            $unitCode = self::cleanStr($row['admin_unit_code'] ?? '');
+            if ($unitCode !== '') {
+                $unit = Database::fetchOne('SELECT id, code, status FROM admin_unit WHERE code = ? AND status = ?', [$unitCode, 'active']);
+                if ($unit === null) {
+                    $errors[] = ['line' => $line, 'error' => "Unknown admin_unit_code '$unitCode'"];
+                    continue;
+                }
+                Auth::assertInScope($request, $unit['id']);
+                $data['address']['admin_unit_id'] = $unit['id'];
+            }
+            if ($data['first_name'] === '' || $data['last_name'] === '') {
+                $errors[] = ['line' => $line, 'error' => 'first_name and last_name are required'];
+                continue;
+            }
+            if ($data['sex'] !== '' && !in_array($data['sex'], ['M', 'F', 'O'], true)) {
+                $errors[] = ['line' => $line, 'error' => 'sex must be M, F or O'];
+                continue;
+            }
+            if ($data['dob_eth'] !== '') {
+                [$ey, $em, $ed] = array_map('intval', explode('-', $data['dob_eth']));
+                if ($ey < 1900 || $em < 1 || $em > 13 || $ed < 1 || $ed > 30) {
+                    $errors[] = ['line' => $line, 'error' => 'Invalid dob_eth (expected YYYY-MM-DD in Ethiopian calendar)'];
+                    continue;
+                }
+            }
+
+            $nationalIdHash = $data['national_id'] !== '' ? hash('sha256', $data['national_id']) : null;
+            $phoneHash = $data['phone'] !== '' ? hash('sha256', $data['phone']) : null;
+            if ($nationalIdHash !== null && self::findDuplicate($nationalIdHash)) {
+                $errors[] = ['line' => $line, 'error' => 'A citizen with this national ID already exists'];
+                continue;
+            }
+
+            try {
+                $uuid = self::insert($request, $data, $data['address']['admin_unit_id'], $nationalIdHash, $phoneHash);
+            } catch (Throwable $e) {
+                error_log('[LOCIFY] import row failed: ' . $e->getMessage());
+                $errors[] = ['line' => $line, 'error' => 'Database error, row skipped'];
+                continue;
+            }
+            $created[] = ['uuid' => $uuid, 'line' => $line];
+            $count++;
+        }
+
+        Audit::log($request, 'IMPORT_CITIZENS', 'citizen', null, null, [
+            'rows' => count($rows),
+            'created' => count($created),
+            'errors' => count($errors),
+        ]);
+        return ['created' => $created, 'errors' => $errors, 'total' => count($rows)];
+    }
+
+    private static function cleanStr(string $value): string
+    {
+        return trim(mb_substr($value, 0, 255));
+    }
+
+    private static function cleanDate(string $value): string
+    {
+        return preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($value)) ? trim($value) : '';
+    }
+
+    private static function findDuplicate(string $nationalIdHash): bool
+    {
+        return Database::fetchOne(
+            'SELECT id FROM citizen WHERE national_id_hash = ? AND status != ?',
+            [$nationalIdHash, 'archived']
+        ) !== null;
+    }
+
+    private static function insert(Request $request, array $data, string $adminUnitId, ?string $nationalIdHash, ?string $phoneHash): string
+    {
+        $id = uuid4();
+        $uuid = uuid4();
+        $dobEth = $data['dob_eth'] ?? null;
+        $dobGreg = $data['dob_greg'] ?? null;
+
+        if ($dobEth !== null && $dobEth !== '' && ($dobGreg === null || $dobGreg === '')) {
+            [$ey, $em, $ed] = array_map('intval', explode('-', (string)$dobEth));
+            $dobGreg = Calendar::ethToGregDate($ey, $em, $ed);
+        }
+        if ($dobGreg === '') {
+            $dobGreg = null;
+        }
+
+        Database::transaction(function () use ($id, $uuid, $nationalIdHash, $data, $dobEth, $dobGreg, $phoneHash, $adminUnitId) {
+            Database::run(
+                'INSERT INTO citizen (id, uuid, national_id_hash, national_id_mask,
+                    first_name_enc, middle_name_enc, last_name_enc, local_name_enc,
+                    dob_eth, dob_greg, sex, phone_hash, email_hash, status, created_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $id,
+                    $uuid,
+                    $nationalIdHash,
+                    isset($data['national_id']) && $data['national_id'] !== '' ? maskMiddle((string)$data['national_id']) : null,
+                    Crypto::encrypt($data['first_name'] ?? null),
+                    Crypto::encrypt($data['middle_name'] ?? null),
+                    Crypto::encrypt($data['last_name'] ?? null),
+                    Crypto::encrypt($data['local_name'] ?? null),
+                    $dobEth !== '' ? $dobEth : null,
+                    $dobGreg,
+                    $data['sex'] !== '' ? $data['sex'] : null,
+                    $phoneHash,
+                    isset($data['email']) && $data['email'] !== '' ? hash('sha256', $data['email']) : null,
+                    'pending_verification',
+                    Auth::$context['user_id'] ?? null,
+                ]
+            );
+
+            if (isset($data['address']) && is_array($data['address'])) {
+                Database::run(
+                    'INSERT INTO citizen_address (id, citizen_id, admin_unit_id, village_enc, house_no_enc, gps_lat, gps_long, is_primary)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
+                    [
+                        uuid4(),
+                        $id,
+                        $adminUnitId,
+                        Crypto::encrypt($data['address']['village'] ?? null),
+                        Crypto::encrypt($data['address']['house_no'] ?? null),
+                        $data['address']['gps_lat'] ?? null,
+                        $data['address']['gps_long'] ?? null,
+                    ]
+                );
+            }
+
+            Database::run(
+                'INSERT INTO consent (id, citizen_id, scope, granted) VALUES (?, ?, ?, 1)',
+                [uuid4(), $id, 'identity_verification']
+            );
+        });
+
+        return $uuid;
     }
 
     /** Search citizens. Returns limited, decrypted fields. */

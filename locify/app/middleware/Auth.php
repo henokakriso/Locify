@@ -109,6 +109,22 @@ final class Auth
         return $ids;
     }
 
+    /** IDs of the given admin unit and all of its ancestors (unit itself first). */
+    public static function unitAncestorIds(string $unitId): array
+    {
+        $ids = [$unitId];
+        $current = $unitId;
+        while (true) {
+            $row = Database::fetchOne('SELECT parent_id FROM admin_unit WHERE id = ?', [$current]);
+            if ($row === null || $row['parent_id'] === null) {
+                break;
+            }
+            $ids[] = $row['parent_id'];
+            $current = $row['parent_id'];
+        }
+        return $ids;
+    }
+
     /** Require authentication; exits with 401 otherwise. */
     public static function require(Request $request): void
     {
@@ -138,6 +154,26 @@ final class Auth
             Audit::log($request, 'ACCESS_DENIED', 'scope', $resourceUnitId, result: 'denied');
             Response::forbidden('Resource is outside your administrative scope');
         }
+    }
+
+    /**
+     * Scope check that also serves citizens: a citizen can act on resources
+     * owned by their kebele or any ancestor unit (e.g. a woreda-level service).
+     */
+    public static function assertResourceScope(Request $request, string $resourceUnitId): void
+    {
+        if (in_array($resourceUnitId, self::$context['scope_subtree'], true)) {
+            return;
+        }
+        $myUnit = Database::fetchOne(
+            'SELECT admin_unit_id FROM citizen_address WHERE citizen_id = ? AND is_primary = 1',
+            [self::$context['citizen_id'] ?? '']
+        );
+        if ($myUnit !== null && in_array($resourceUnitId, self::unitAncestorIds($myUnit['admin_unit_id']), true)) {
+            return;
+        }
+        Audit::log($request, 'ACCESS_DENIED', 'scope', $resourceUnitId, result: 'denied');
+        Response::forbidden('Resource is outside your administrative scope');
     }
 
     public static function isCitizen(Request $request): bool

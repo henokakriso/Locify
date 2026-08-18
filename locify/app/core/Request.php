@@ -26,8 +26,10 @@ final class Request
             }
         }
         $this->ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        if (isset($this->headers['x-forwarded-for'])) {
-            $this->ip = trim(explode(',', $this->headers['x-forwarded-for'])[0]);
+        // Only trust X-Forwarded-For when the deployment explicitly sits behind
+        // a trusted reverse proxy; otherwise the header is client-suppliable.
+        if (Config::get('proxy.trust', false) && $requestIp = $this->header('x-forwarded-for')) {
+            $this->ip = trim(explode(',', $requestIp)[0]);
         }
         $this->body = $this->parseBody();
     }
@@ -45,7 +47,17 @@ final class Request
 
     public function input(string $key, mixed $default = null): mixed
     {
-        return $this->body[$key] ?? $default;
+        if (!str_contains($key, '.')) {
+            return $this->body[$key] ?? $default;
+        }
+        $value = $this->body;
+        foreach (explode('.', $key) as $segment) {
+            if (!is_array($value) || !array_key_exists($segment, $value)) {
+                return $default;
+            }
+            $value = $value[$segment];
+        }
+        return $value;
     }
 
     public function header(string $name): ?string

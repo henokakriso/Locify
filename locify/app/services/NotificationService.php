@@ -10,13 +10,21 @@ final class NotificationService
     public static function send(Request $request, array $data): array
     {
         $id = uuid4();
+        $userId = $data['user_id'] ?? null;
+        $citizenId = $data['citizen_id'] ?? null;
+        // Link the recipient's user account when one exists so the in-app
+        // inbox reflects notifications addressed to them.
+        if ($userId === null && $citizenId !== null) {
+            $user = Database::fetchOne('SELECT id FROM `user` WHERE citizen_id = ? LIMIT 1', [$citizenId]);
+            $userId = $user['id'] ?? null;
+        }
         Database::run(
             'INSERT INTO notification (id, user_id, citizen_id, channel, template_id, subject, body, data_json, status)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $id,
-                $data['user_id'] ?? null,
-                $data['citizen_id'] ?? null,
+                $userId,
+                $citizenId,
                 $data['channel'] ?? 'in_app',
                 $data['template_id'] ?? null,
                 $data['subject'] ?? null,

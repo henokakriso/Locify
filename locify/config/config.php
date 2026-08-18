@@ -41,6 +41,10 @@ final class Config
                 'jwt_secret'       => '',
                 'jwt_ttl'          => 900,
                 'jwt_refresh_ttl'  => 2592000,
+                'mfa_enforced'     => false,
+            ],
+            'proxy' => [
+                'trust' => false,
             ],
             'rate_limit' => [
                 'citizen' => 100,
@@ -54,6 +58,9 @@ final class Config
             'sync' => [
                 'interval_seconds' => 300,
                 'max_retries'      => 5,
+            ],
+            'import' => [
+                'max_rows' => 500,
             ],
             'language' => [
                 'default' => 'am',
@@ -91,6 +98,8 @@ final class Config
             'JWT_SECRET'  => ['security', 'jwt_secret'],
             'JWT_TTL'     => ['security', 'jwt_ttl'],
             'JWT_REFRESH_TTL' => ['security', 'jwt_refresh_ttl'],
+            'MFA_ENFORCED' => ['security', 'mfa_enforced'],
+            'TRUST_PROXY' => ['proxy', 'trust'],
             'RATE_LIMIT_CITIZEN' => ['rate_limit', 'citizen'],
             'RATE_LIMIT_OFFICER' => ['rate_limit', 'officer'],
             'RATE_LIMIT_PUBLIC'  => ['rate_limit', 'public'],
@@ -113,6 +122,12 @@ final class Config
 
         if (is_string($config['app']['debug'])) {
             $config['app']['debug'] = strtolower((string)$config['app']['debug']) === 'true';
+        }
+        if (is_string($config['security']['mfa_enforced'])) {
+            $config['security']['mfa_enforced'] = strtolower((string)$config['security']['mfa_enforced']) === 'true';
+        }
+        if (is_string($config['proxy']['trust'])) {
+            $config['proxy']['trust'] = strtolower((string)$config['proxy']['trust']) === 'true';
         }
 
         self::$cache = $config;

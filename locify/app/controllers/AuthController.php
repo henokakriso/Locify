@@ -13,7 +13,7 @@ final class AuthController extends Controller
         $password = (string)$request->input('password');
 
         $user = Database::fetchOne(
-            'SELECT id, username_hash, password_hash, citizen_id, status, mfa_enabled,
+            'SELECT id, username_hash, password_hash, citizen_id, status, mfa_enabled, mfa_secret,
                     failed_attempts, locked_until
              FROM `user` WHERE username_hash = ?',
             [hash('sha256', $username)]
@@ -53,7 +53,26 @@ final class AuthController extends Controller
         }
 
         Database::run(
-            'UPDATE `user` SET failed_attempts = 0, locked_until = NULL, last_login = NOW() WHERE id = ?',
+            'UPDATE `user` SET failed_attempts = 0, locked_until = NULL WHERE id = ?',
+            [$user['id']]
+        );
+
+        // Second factor active: do not issue tokens — return a short-lived
+        // challenge that can only be redeemed with a valid TOTP/recovery code.
+        $mfaSecret = Crypto::decrypt($user['mfa_secret'] ?? null);
+        if ((int)$user['mfa_enabled'] === 1 && $mfaSecret !== null && $mfaSecret !== '') {
+            $challenge = Jwt::encode([
+                'sub' => $user['id'],
+                'type' => 'mfa',
+            ], 180);
+            SecurityEvent::log('mfa_challenge_issued', 'info', $request, ['user_id' => $user['id']]);
+            Response::error('MFA_REQUIRED', 'Two-factor authentication code required', 401, [
+                'mfa_token' => $challenge,
+            ]);
+        }
+
+        Database::run(
+            'UPDATE `user` SET last_login = NOW() WHERE id = ?',
             [$user['id']]
         );
 
@@ -145,7 +164,7 @@ final class AuthController extends Controller
         Database::transaction(function () use ($id, $request, $role, $unit, $password) {
             Database::run(
                 'INSERT INTO `user` (id, username_hash, password_hash, status, mfa_enabled)
-                 VALUES (?, ?, ?, ?, 1)',
+                 VALUES (?, ?, ?, ?, 0)',
                 [$id, hash('sha256', $request->input('username')), password_hash($password, PASSWORD_ARGON2ID), 'active']
             );
             Database::run(
@@ -206,5 +225,169 @@ final class AuthController extends Controller
         Audit::log($request, 'CHANGE_PASSWORD', 'user', $userId);
         SecurityEvent::log('password_changed', 'info', $request);
         Response::success(['status' => 'changed']);
+    }
+
+    /** Complete login by redeeming the MFA challenge with a TOTP/recovery code. */
+    public function verifyMfa(Request $request): void
+    {
+        Validator::requireFields($request, ['mfa_token', 'code']);
+        $claims = Jwt::decode((string)$request->input('mfa_token'));
+        if ($claims === null || ($claims['type'] ?? '') !== 'mfa' || !isset($claims['sub'])) {
+            SecurityEvent::log('invalid_mfa_challenge', 'medium', $request);
+            Response::unauthorized('Invalid or expired MFA challenge');
+        }
+        $userId = (string)$claims['sub'];
+        $user = Database::fetchOne(
+            'SELECT id, citizen_id, status, mfa_enabled, mfa_secret FROM `user` WHERE id = ?',
+            [$userId]
+        );
+        if ($user === null || $user['status'] !== 'active' || (int)$user['mfa_enabled'] !== 1 || empty($user['mfa_secret'])) {
+            SecurityEvent::log('invalid_mfa_challenge', 'medium', $request);
+            Response::unauthorized('Invalid or expired MFA challenge');
+        }
+
+        $rateOk = (new RateLimiter(Database::pdo()))->allow('mfa:' . $userId, 5, $request->ip);
+        if (!$rateOk) {
+            SecurityEvent::log('mfa_rate_limited', 'high', $request, ['user_id' => $userId]);
+            Response::error('RATE_LIMITED', 'Too many verification attempts', 429);
+        }
+
+        $code = (string)$request->input('code');
+        $verified = Totp::verify(Crypto::decrypt($user['mfa_secret']) ?? '', $code);
+        $viaRecovery = false;
+        if (!$verified) {
+            $recovery = Database::fetchOne(
+                'SELECT id FROM user_mfa_recovery WHERE user_id = ? AND code_hash = ? AND used_at IS NULL',
+                [$userId, Totp::codeHash($code)]
+            );
+            if ($recovery !== null) {
+                Database::run('UPDATE user_mfa_recovery SET used_at = NOW() WHERE id = ?', [$recovery['id']]);
+                $verified = true;
+                $viaRecovery = true;
+            }
+        }
+        if (!$verified) {
+            SecurityEvent::log('failed_mfa_verification', 'medium', $request, ['user_id' => $userId]);
+            Response::unauthorized('Invalid authentication code');
+        }
+
+        Database::run('UPDATE `user` SET last_login = NOW() WHERE id = ?', [$userId]);
+        Audit::log($request, 'LOGIN', 'user', $userId, null, ['factor' => $viaRecovery ? 'recovery_code' : 'totp']);
+        SecurityEvent::log('successful_login', 'info', $request, ['user_id' => $userId, 'mfa' => true]);
+
+        Response::success([
+            'access_token' => Jwt::encode(['sub' => $userId, 'citizen_id' => $user['citizen_id'], 'type' => 'access']),
+            'refresh_token' => Jwt::encode(['sub' => $userId, 'type' => 'refresh'], (int)Config::get('security.jwt_refresh_ttl', 2592000)),
+            'token_type' => 'Bearer',
+            'expires_in' => (int)Config::get('security.jwt_ttl', 900),
+        ]);
+    }
+
+    /** Begin TOTP setup: returns a new secret and its otpauth:// URI. */
+    public function mfaSetup(Request $request): void
+    {
+        $this->requireAuth($request);
+        $userId = $this->context()['user_id'];
+        $user = Database::fetchOne('SELECT mfa_enabled, mfa_secret FROM `user` WHERE id = ?', [$userId]);
+        if ($user['mfa_enabled'] === 1) {
+            Response::error('MFA_ALREADY_ENABLED', 'Two-factor authentication is already active', 409);
+        }
+        $secret = Totp::generateSecret();
+        $account = substr((string)$this->context()['claims']['sub'], 0, 8);
+        SecurityEvent::log('mfa_setup_started', 'info', $request, ['user_id' => $userId]);
+        Response::success([
+            'secret' => $secret,
+            'otpauth_url' => Totp::otpauthUri($secret, 'locify-' . $account),
+        ]);
+    }
+
+    /** Confirm TOTP setup with one live code, store the secret, emit recovery codes. */
+    public function mfaEnable(Request $request): void
+    {
+        $this->requireAuth($request);
+        Validator::requireFields($request, ['secret', 'code']);
+        $userId = $this->context()['user_id'];
+        $user = Database::fetchOne('SELECT mfa_enabled, mfa_secret FROM `user` WHERE id = ?', [$userId]);
+        if ($user['mfa_enabled'] === 1) {
+            Response::error('MFA_ALREADY_ENABLED', 'Two-factor authentication is already active', 409);
+        }
+        $secret = (string)$request->input('secret');
+        if (!preg_match('/^[A-Z2-7]{20,}$/', $secret)) {
+            Response::validationError(['secret' => 'Invalid secret format']);
+        }
+        if (!Totp::verify($secret, (string)$request->input('code'))) {
+            SecurityEvent::log('failed_mfa_setup', 'medium', $request, ['user_id' => $userId]);
+            Response::validationError(['code' => 'The code did not match. Check the clock on your authenticator device.']);
+        }
+
+        $recovery = Totp::recoveryCodes(10);
+        $recoveryHashes = array_map([Totp::class, 'codeHash'], $recovery);
+
+        Database::transaction(function () use ($userId, $secret, $recoveryHashes) {
+            Database::run(
+                'UPDATE `user` SET mfa_enabled = 1, mfa_secret = ? WHERE id = ?',
+                [Crypto::encrypt($secret), $userId]
+            );
+            foreach ($recoveryHashes as $hash) {
+                Database::run(
+                    'INSERT INTO user_mfa_recovery (id, user_id, code_hash) VALUES (?, ?, ?)',
+                    [uuid4(), $userId, $hash]
+                );
+            }
+        });
+
+        Audit::log($request, 'ENABLE_MFA', 'user', $userId);
+        SecurityEvent::log('mfa_enabled', 'high', $request, ['user_id' => $userId]);
+        Response::success([
+            'status' => 'enabled',
+            'recovery_codes' => $recovery,
+            'note' => 'Recovery codes are shown once and stored only as hashes. Print them and keep them offline.',
+        ], 201);
+    }
+
+    /** Disable 2FA after proving possession of a valid code. */
+    public function mfaDisable(Request $request): void
+    {
+        $this->requireAuth($request);
+        Validator::requireFields($request, ['code']);
+        $userId = $this->context()['user_id'];
+        $user = Database::fetchOne('SELECT mfa_enabled, mfa_secret FROM `user` WHERE id = ?', [$userId]);
+        if ((int)$user['mfa_enabled'] !== 1 || empty($user['mfa_secret'])) {
+            Response::error('MFA_NOT_ENABLED', 'Two-factor authentication is not active', 409);
+        }
+        $rateOk = (new RateLimiter(Database::pdo()))->allow('mfadis:' . $userId, 5, $request->ip);
+        if (!$rateOk) {
+            Response::error('RATE_LIMITED', 'Too many attempts', 429);
+        }
+        if (!Totp::verify(Crypto::decrypt($user['mfa_secret']) ?? '', (string)$request->input('code'))) {
+            SecurityEvent::log('failed_mfa_disable', 'medium', $request, ['user_id' => $userId]);
+            Response::validationError(['code' => 'Invalid authentication code']);
+        }
+        Database::transaction(function () use ($userId) {
+            Database::run(
+                'UPDATE `user` SET mfa_enabled = 0, mfa_secret = NULL WHERE id = ?',
+                [$userId]
+            );
+            Database::run('DELETE FROM user_mfa_recovery WHERE user_id = ?', [$userId]);
+        });
+        Audit::log($request, 'DISABLE_MFA', 'user', $userId);
+        SecurityEvent::log('mfa_disabled', 'high', $request, ['user_id' => $userId]);
+        Response::success(['status' => 'disabled']);
+    }
+
+    /** Remaining (unused) recovery codes, displayed one-per-line as hashes. */
+    public function mfaRecovery(Request $request): void
+    {
+        $this->requireAuth($request);
+        $userId = $this->context()['user_id'];
+        $remaining = Database::fetchOne(
+            'SELECT COUNT(*) AS remaining FROM user_mfa_recovery WHERE user_id = ? AND used_at IS NULL',
+            [$userId]
+        );
+        Response::success([
+            'mfa_enabled' => (int)(Database::fetchOne('SELECT mfa_enabled FROM `user` WHERE id = ?', [$userId])['mfa_enabled'] ?? 0) === 1,
+            'remaining_codes' => (int)($remaining['remaining'] ?? 0),
+            'reset_hint' => 'Recovery codes cannot be revealed again. Regenerate them by disabling and re-enabling 2FA.',
+        ]);
     }
 }

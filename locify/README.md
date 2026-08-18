@@ -42,6 +42,8 @@ Login at `http://127.0.0.1:8080/login` with the administrator created above.
 | `DB_*` | MySQL/MariaDB connection |
 | `APP_KEY` | AES-256-GCM envelope encryption key (base64, 32+ bytes) |
 | `JWT_SECRET` | HMAC-SHA256 signing secret (base64, 32+ bytes) |
+| `MFA_ENFORCED` | `true` to require every user to enable TOTP 2FA before login |
+| `TRUST_PROXY` | `true` only behind a trusted reverse proxy that overwrites `X-Forwarded-For` |
 | `PAYMENT_MODE` | `mock` until an official integration is approved |
 | `APP_DEBUG` | `true` in development only |
 
@@ -75,9 +77,12 @@ random nonces, so only new writes use a new key.
 
 ```
 php bin/locify db:setup            # load schema + seed (idempotent)
+php bin/locify db:backup           # gzip mysqldump into storage/backups
+php bin/locify db:status           # quick DB health + row counts
 php bin/locify admin:create        # create/reset system administrator
 php bin/locify payments:reconcile  # reconcile mock payments
 php bin/locify test:calendar       # verify Ethiopian calendar conversions
+php bin/locify test:totp           # verify RFC 6238 TOTP implementation
 ```
 
 ## API
@@ -124,12 +129,22 @@ php tests/test_calendar.php        # calendar conversions (11 anchors + round tr
 
 ## Security
 
-- Passwords: Argon2id, minimum 12 chars with mixed classes; lockout after 5
+- **Passwords**: Argon2id, minimum 12 chars with mixed classes; lockout after 5
   failed attempts (15 minutes).
-- JWT: HMAC-SHA256, `jti` per token, no secrets in the client.
-- Rate limits: login 10/min, officers 300/min, public endpoints 30/min.
+- **Two-factor authentication**: per-account TOTP (RFC 6238, 30 s, 6 digits)
+  with QR setup, 10 one-time recovery codes (stored hashed, one-time use), and
+  a 3-minute challenge token on login. `MFA_ENFORCED=true` blocks login until
+  setup is complete.
+- **JWT**: HMAC-SHA256, `jti` per token, no secrets in the client.
+- **CSRF defense-in-depth**: state-changing API requests from browsers are
+  rejected unless the `Origin` matches the configured application URL.
+- **Rate limits**: login 10/min, MFA verification 5/min, import 5/min,
+  officers 300/min, public endpoints 30/min. Client IPs are only honored from
+  `X-Forwarded-For` when `TRUST_PROXY=true`.
+- **CSV safety**: citizen import validates every row (duplicates reported, not
+  aborted); export neutralizes spreadsheet formula injection.
 - All audit writes append-only; security events (failed logins, permission
-  denials, tampering) are logged continuously.
+  denials, tampering, cross-origin rejections) are logged continuously.
 
 ## Status
 

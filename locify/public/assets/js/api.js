@@ -61,6 +61,7 @@ const API = (() => {
       const err = new Error(data?.error?.message || "Request failed");
       err.code = data?.error?.code || "ERROR";
       err.status = res.status;
+      err.data = data || null;
       throw err;
     }
     return data;
@@ -95,6 +96,17 @@ const API = (() => {
       });
   }
 
+  // Complete a two-factor (TOTP/recovery code) challenge from a login attempt.
+  function verifyMfa(mfaToken, code) {
+    return request("POST", "/auth/mfa/verify", { mfa_token: mfaToken, code })
+      .then((data) => {
+        accessToken = data.access_token;
+        refreshToken = data.refresh_token;
+        persistSession();
+        return fetchMe();
+      });
+  }
+
   async function fetchMe() {
     currentUser = await request("GET", "/auth/me");
     return currentUser;
@@ -115,7 +127,7 @@ const API = (() => {
 
   return {
     get, post, put, del,
-    login, logout, fetchMe,
+    login, verifyMfa, logout, fetchMe,
     getToken: () => accessToken,
     getUser: () => currentUser,
     isLoggedIn: () => !!accessToken,
@@ -142,9 +154,13 @@ function el(tag, attrs = {}, children = []) {
 
 function badge(status) {
   const map = {
-    active: "green", completed: "green", issued: "green", signed: "green", valid: "green",
+    active: "green", completed: "green", issued: "green", signed: "green", valid: "green", printed: "green",
+    approved: "green", verified: "green", collected: "green",
     submitted: "blue", pending: "gold", in_review: "gold", waiting: "gold", booked: "gold", draft: "gray",
+    queued: "gold", printing: "gold", hold: "gold", resumed: "gold", confirmed: "gold", checked_in: "gold",
+    verification: "blue", document_check: "blue", needs_correction: "gold", correction_submitted: "blue",
     rejected: "red", revoked: "red", invalid: "red", cancelled: "red", failed: "red", expired: "red",
+    quality_failed: "red",
   };
   const kind = map[status] || "gray";
   const b = el("span", { class: "badge badge-" + kind, text: status.replace(/_/g, " ") });

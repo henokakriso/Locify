@@ -27,10 +27,33 @@ function locifyRoutes(): array
         ['route' => '/api/v1/auth/me', 'http' => 'GET', 'action' => 'me', 'auth' => true, 'handler' => ['AuthController', 'me']],
         ['route' => '/api/v1/auth/change-password', 'http' => 'POST', 'action' => 'change-password', 'auth' => true, 'handler' => ['AuthController', 'changePassword']],
         ['route' => '/api/v1/auth/register-user', 'http' => 'POST', 'action' => 'register-user', 'auth' => true, 'handler' => ['AuthController', 'registerUser'], 'permission' => 'USER:MANAGE'],
+        // ============ MFA (TOTP 2FA) ============
+        ['route' => '/api/v1/auth/mfa/verify', 'http' => 'POST', 'action' => 'mfa-verify', 'auth' => false, 'handler' => ['AuthController', 'verifyMfa']],
+        ['route' => '/api/v1/auth/mfa/setup', 'http' => 'POST', 'action' => 'mfa-setup', 'auth' => true, 'handler' => ['AuthController', 'mfaSetup']],
+        ['route' => '/api/v1/auth/mfa/enable', 'http' => 'POST', 'action' => 'mfa-enable', 'auth' => true, 'handler' => ['AuthController', 'mfaEnable']],
+        ['route' => '/api/v1/auth/mfa/disable', 'http' => 'POST', 'action' => 'mfa-disable', 'auth' => true, 'handler' => ['AuthController', 'mfaDisable']],
+        ['route' => '/api/v1/auth/mfa/recovery', 'http' => 'GET', 'action' => 'mfa-recovery', 'auth' => true, 'handler' => ['AuthController', 'mfaRecovery']],
 
         // ============ CITIZENS ============
+        ['route' => '/api/v1/portal/units', 'http' => 'GET', 'action' => 'portal-units', 'auth' => false, 'handler' => ['PortalController', 'units']],
+        ['route' => '/api/v1/portal/register', 'http' => 'POST', 'action' => 'portal-register', 'auth' => false, 'handler' => ['PortalController', 'register']],
+        ['route' => '/api/v1/portal/profile', 'http' => 'GET', 'action' => 'portal-profile', 'auth' => true, 'handler' => ['PortalController', 'profile'], 'permission' => 'CITIZEN:VIEW_SELF'],
         ['route' => '/api/v1/citizens', 'http' => 'POST', 'action' => 'create', 'auth' => true, 'handler' => ['CitizenController', 'create'], 'permission' => 'CITIZEN:CREATE'],
         ['route' => '/api/v1/citizens/search', 'http' => 'GET', 'action' => 'search', 'auth' => true, 'handler' => ['CitizenController', 'search'], 'permission' => 'CITIZEN:SEARCH'],
+        ['route' => '/api/v1/citizens/import', 'http' => 'POST', 'action' => 'import', 'auth' => true, 'handler' => ['CitizenController', 'import'], 'permission' => 'CITIZEN:CREATE'],
+        ['route' => '/api/v1/citizens/export', 'http' => 'GET', 'action' => 'export', 'auth' => true, 'handler' => ['CitizenController', 'export'], 'permission' => 'CITIZEN:SEARCH'],
+
+        // ============ RESIDENT MANAGEMENT ============
+        ['route' => '/api/v1/residents', 'http' => 'POST', 'action' => 'register', 'auth' => true, 'handler' => ['ResidentController', 'register'], 'permission' => 'RESIDENT:REGISTER'],
+        ['route' => '/api/v1/residents/{uuid}', 'http' => 'GET', 'action' => 'profile', 'auth' => true, 'handler' => ['ResidentController', 'profile'], 'permission' => 'RESIDENT:VIEW'],
+        ['route' => '/api/v1/residents/{uuid}/history', 'http' => 'GET', 'action' => 'history', 'auth' => true, 'handler' => ['ResidentController', 'history'], 'permission' => 'RESIDENT:VIEW'],
+        ['route' => '/api/v1/residents/{uuid}/move', 'http' => 'POST', 'action' => 'move', 'auth' => true, 'handler' => ['ResidentController', 'move'], 'permission' => 'MOVE:RECORD'],
+        ['route' => '/api/v1/residents/{uuid}/verifications', 'http' => 'GET', 'action' => 'verifications', 'auth' => true, 'handler' => ['ResidentController', 'verifications'], 'permission' => 'RESIDENT:VIEW'],
+        ['route' => '/api/v1/households', 'http' => 'GET', 'action' => 'households', 'auth' => true, 'handler' => ['ResidentController', 'households'], 'permission' => 'HOUSEHOLD:VIEW'],
+        ['route' => '/api/v1/households', 'http' => 'POST', 'action' => 'household-create', 'auth' => true, 'handler' => ['ResidentController', 'householdCreate'], 'permission' => 'HOUSEHOLD:MANAGE'],
+        ['route' => '/api/v1/households/{uuid}', 'http' => 'GET', 'action' => 'household-show', 'auth' => true, 'handler' => ['ResidentController', 'householdShow'], 'permission' => 'HOUSEHOLD:VIEW'],
+        ['route' => '/api/v1/households/{uuid}/members', 'http' => 'POST', 'action' => 'household-add-member', 'auth' => true, 'handler' => ['ResidentController', 'householdAddMember'], 'permission' => 'HOUSEHOLD:MANAGE'],
+        ['route' => '/api/v1/households/{uuid}/members/{memberId}', 'http' => 'DELETE', 'action' => 'household-remove-member', 'auth' => true, 'handler' => ['ResidentController', 'householdRemoveMember'], 'permission' => 'HOUSEHOLD:MANAGE'],
         ['route' => '/api/v1/citizens/{uuid}', 'http' => 'GET', 'action' => 'show', 'auth' => true, 'handler' => ['CitizenController', 'show'], 'permission' => 'CITIZEN:VIEW'],
         ['route' => '/api/v1/citizens/{uuid}', 'http' => 'PUT', 'action' => 'update', 'auth' => true, 'handler' => ['CitizenController', 'update'], 'permission' => 'CITIZEN:EDIT'],
         ['route' => '/api/v1/citizens/{uuid}/verify', 'http' => 'POST', 'action' => 'verify', 'auth' => true, 'handler' => ['CitizenController', 'verify'], 'permission' => 'CITIZEN:VERIFY_INITIATE'],
@@ -43,8 +66,12 @@ function locifyRoutes(): array
         ['route' => '/api/v1/services', 'http' => 'GET', 'action' => 'catalog', 'auth' => true, 'handler' => ['ServiceController', 'catalog'], 'permission' => 'APPLICATION:CREATE'],
         ['route' => '/api/v1/services/applications', 'http' => 'POST', 'action' => 'create', 'auth' => true, 'handler' => ['ApplicationController', 'create'], 'permission' => 'APPLICATION:CREATE'],
         ['route' => '/api/v1/services/applications', 'http' => 'GET', 'action' => 'index', 'auth' => true, 'handler' => ['ApplicationController', 'index'], 'permission' => 'APPLICATION:VIEW'],
+        // Track by public Service ID — must precede the generic {uuid} route (§15)
+        ['route' => '/api/v1/services/applications/by-service-id/{number}', 'http' => 'GET', 'action' => 'by-service-number', 'auth' => true, 'handler' => ['ApplicationController', 'byServiceNumber']],
         ['route' => '/api/v1/services/applications/{uuid}', 'http' => 'GET', 'action' => 'show', 'auth' => true, 'handler' => ['ApplicationController', 'show'], 'permission' => 'APPLICATION:VIEW'],
         ['route' => '/api/v1/services/applications/{uuid}/step', 'http' => 'PUT', 'action' => 'advance', 'auth' => true, 'handler' => ['ApplicationController', 'advance'], 'permission' => 'APPLICATION:PROCESS'],
+        ['route' => '/api/v1/applications/{uuid}/documents', 'http' => 'POST', 'action' => 'upload', 'auth' => true, 'handler' => ['UploadController', 'upload']],
+        ['route' => '/api/v1/applications/{uuid}/documents/{docUuid}/review', 'http' => 'POST', 'action' => 'review-upload', 'auth' => true, 'handler' => ['UploadController', 'review'], 'permission' => 'APPLICATION:PROCESS'],
         ['route' => '/api/v1/workflows', 'http' => 'GET', 'action' => 'workflows', 'auth' => true, 'handler' => ['ServiceController', 'workflows'], 'permission' => 'APPLICATION:VIEW'],
 
         // ============ DOCUMENTS ============
@@ -59,6 +86,11 @@ function locifyRoutes(): array
         ['route' => '/api/v1/documents/{uuid}/sign', 'http' => 'POST', 'action' => 'sign', 'auth' => true, 'handler' => ['DocumentController', 'sign'], 'permission' => 'DOCUMENT:SIGN'],
         ['route' => '/api/v1/documents/{uuid}/issue', 'http' => 'POST', 'action' => 'issue', 'auth' => true, 'handler' => ['DocumentController', 'issue'], 'permission' => 'DOCUMENT:VIEW'],
         ['route' => '/api/v1/documents/{uuid}/revoke', 'http' => 'POST', 'action' => 'revoke', 'auth' => true, 'handler' => ['DocumentController', 'revoke'], 'permission' => 'DOCUMENT:REVOKE'],
+        ['route' => '/api/v1/documents/{uuid}/print-jobs', 'http' => 'POST', 'action' => 'print-job-create', 'auth' => true, 'handler' => ['PrintController', 'create'], 'permission' => 'PRINT:OPERATE'],
+
+        // ============ DIGITAL KEBELE SERVICES: PRINT QUEUE (spec §25-§26) ============
+        ['route' => '/api/v1/print-jobs', 'http' => 'GET', 'action' => 'print-jobs', 'auth' => true, 'handler' => ['PrintController', 'jobs'], 'permission' => 'PRINT:OPERATE'],
+        ['route' => '/api/v1/print-jobs/{uuid}/update', 'http' => 'POST', 'action' => 'print-job-update', 'auth' => true, 'handler' => ['PrintController', 'update'], 'permission' => 'PRINT:OPERATE'],
         ['route' => '/api/v1/documents/{uuid}/links', 'http' => 'POST', 'action' => 'link-doc', 'auth' => true, 'handler' => ['DocumentLinkController', 'link'], 'permission' => 'DOCUMENT:LINK'],
         ['route' => '/api/v1/documents/{uuid}/links', 'http' => 'GET', 'action' => 'doc-links', 'auth' => true, 'handler' => ['DocumentLinkController', 'links'], 'permission' => 'DOCUMENT:VIEW'],
 
@@ -68,6 +100,8 @@ function locifyRoutes(): array
         ['route' => '/api/v1/appointments', 'http' => 'GET', 'action' => 'index', 'auth' => true, 'handler' => ['AppointmentController', 'index'], 'permission' => 'APPOINTMENT:MANAGE'],
         ['route' => '/api/v1/appointments/{uuid}', 'http' => 'DELETE', 'action' => 'cancel', 'auth' => true, 'handler' => ['AppointmentController', 'cancel'], 'permission' => 'APPOINTMENT:CREATE'],
         ['route' => '/api/v1/appointments/{uuid}/confirm', 'http' => 'POST', 'action' => 'confirm', 'auth' => true, 'handler' => ['AppointmentController', 'confirm'], 'permission' => 'APPOINTMENT:MANAGE'],
+        ['route' => '/api/v1/appointments/{uuid}/check-in', 'http' => 'POST', 'action' => 'check-in', 'auth' => true, 'handler' => ['AppointmentController', 'checkIn'], 'permission' => 'APPOINTMENT:MANAGE'],
+        ['route' => '/api/v1/appointments/{uuid}/finish', 'http' => 'POST', 'action' => 'appointment-finish', 'auth' => true, 'handler' => ['AppointmentController', 'finish'], 'permission' => 'APPOINTMENT:MANAGE'],
         ['route' => '/api/v1/queue/tickets', 'http' => 'POST', 'action' => 'issue', 'auth' => true, 'handler' => ['QueueController', 'issue'], 'permission' => 'QUEUE:ISSUE'],
         ['route' => '/api/v1/queue/next', 'http' => 'POST', 'action' => 'call-next', 'auth' => true, 'handler' => ['QueueController', 'callNext'], 'permission' => 'QUEUE:CALL'],
         ['route' => '/api/v1/queue/status', 'http' => 'GET', 'action' => 'status', 'auth' => true, 'handler' => ['QueueController', 'status'], 'permission' => 'QUEUE:ISSUE'],
@@ -130,5 +164,8 @@ function locifyRoutes(): array
         // ============ OFFLINE SYNC (C sync agent) ============
         ['route' => '/api/v1/sync/push', 'http' => 'POST', 'action' => 'push', 'auth' => true, 'handler' => ['SyncController', 'push']],
         ['route' => '/api/v1/sync/ack', 'http' => 'POST', 'action' => 'ack', 'auth' => true, 'handler' => ['SyncController', 'ack']],
+
+        // ============ SYSTEM HEALTH (public) ============
+        ['route' => '/api/v1/health', 'http' => 'GET', 'action' => 'health', 'auth' => false, 'handler' => ['HealthController', 'health']],
     ];
 }

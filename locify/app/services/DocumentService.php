@@ -13,7 +13,12 @@ final class DocumentService
      */
     public static function create(Request $request, string $applicationUuid, array $data): array
     {
-        $app = Database::fetchOne('SELECT * FROM application WHERE uuid = ?', [$applicationUuid]);
+        $app = Database::fetchOne(
+            'SELECT a.*, s.service_code, s.issuance_mode FROM application a
+             JOIN service_catalog s ON s.id = a.service_catalog_id
+             WHERE a.uuid = ?',
+            [$applicationUuid]
+        );
         if ($app === null) {
             Response::notFound('Application not found');
         }
@@ -21,7 +26,7 @@ final class DocumentService
 
         $id = uuid4();
         $uuid = uuid4();
-        $docNumber = nextDocumentNumber(Database::pdo());
+        $docNumber = nextDocumentNumber(Database::pdo(), $app['service_code'] ?? null);
 
         $content = [
             'document_type' => $data['document_type'] ?? 'certificate',
@@ -40,10 +45,13 @@ final class DocumentService
         file_put_contents($filePath, Crypto::encrypt($fileContent) ?? '');
         chmod($filePath, 0600);
 
+        $printRequired = in_array($app['issuance_mode'], ['PRINT_ONLY', 'DIGITAL_AND_PRINT'], true) ? 1 : 0;
+
         Database::run(
             'INSERT INTO document (id, uuid, document_number, document_type, title,
-                application_id, citizen_id, file_path_enc, file_hash, status, version, created_by)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                application_id, original_document_id, citizen_id, file_path_enc, file_hash,
+                status, print_required, version, created_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $id,
                 $uuid,
@@ -51,10 +59,12 @@ final class DocumentService
                 $data['document_type'] ?? 'certificate',
                 $data['title'] ?? $docNumber,
                 $app['id'],
+                $app['requested_document_id'] ?? null,
                 $app['citizen_id'],
                 Crypto::encrypt($filePath),
                 hash_file('sha256', $filePath),
                 'draft',
+                $printRequired,
                 1,
                 Auth::$context['user_id'] ?? null,
             ]
@@ -191,8 +201,15 @@ final class DocumentService
             [
                 Calendar::formatEth($ey, $em, $ed),
                 date('Y-m-d'),
-                Database::fetchOne('SELECT id FROM office WHERE admin_unit_id = ? LIMIT 1',
-                    [Auth::$context['scope_unit'] ?? ''])['id'] ?? null,
+                Database::fetchOne(
+                    'SELECT o.id FROM office o
+                     JOIN citizen_address ca ON ca.admin_unit_id = o.admin_unit_id
+                     WHERE ca.citizen_id = ? AND ca.is_primary = 1 AND o.is_active = 1 LIMIT 1',
+                    [$doc['citizen_id']]
+                )['id'] ?? Database::fetchOne(
+                    'SELECT id FROM office WHERE admin_unit_id = ? LIMIT 1',
+                    [Auth::$context['scope_unit'] ?? '']
+                )['id'] ?? null,
                 $doc['id'],
             ]
         );

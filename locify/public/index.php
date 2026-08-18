@@ -19,6 +19,7 @@ require __DIR__ . '/../app/helpers/Calendar.php';
 require __DIR__ . '/../app/security/Crypto.php';
 require __DIR__ . '/../app/security/Jwt.php';
 require __DIR__ . '/../app/security/RateLimiter.php';
+require __DIR__ . '/../app/security/Totp.php';
 require __DIR__ . '/../app/core/Database.php';
 require __DIR__ . '/../app/core/Request.php';
 require __DIR__ . '/../app/core/Response.php';
@@ -34,8 +35,10 @@ require __DIR__ . '/../app/services/NotificationService.php';
 require __DIR__ . '/../app/services/PaymentService.php';
 require __DIR__ . '/../app/controllers/AuthController.php';
 require __DIR__ . '/../app/controllers/CitizenController.php';
+require __DIR__ . '/../app/controllers/ResidentController.php';
 require __DIR__ . '/../app/controllers/ServiceController.php';
 require __DIR__ . '/../app/controllers/ApiControllers.php';
+require __DIR__ . '/../app/controllers/DKSControllers.php';
 require __DIR__ . '/../app/controllers/CollaborationControllers.php';
 require __DIR__ . '/../api/routes.php';
 
@@ -48,6 +51,23 @@ set_exception_handler(function (Throwable $e) {
 });
 
 $request = new Request();
+
+// ---------- CSRF defense-in-depth: reject cross-origin state-changing requests ----------
+// Browsers attach an Origin header to cross-origin fetch/XHR and to same-origin
+// POSTs; when it is present it must match the configured application URL or the
+// request's own Host header (the same origin as far as the browser is concerned).
+$originHeader = $request->header('origin');
+if ($originHeader !== null && !in_array($request->method, ['GET', 'HEAD', 'OPTIONS'], true)) {
+    $allowed = parse_url((string)Config::get('app.url', ''), PHP_URL_HOST);
+    $hostHeader = parse_url((string)($request->header('host') ?? ''), PHP_URL_HOST) ?: (string)($request->header('host') ?? '');
+    $originHost = parse_url($originHeader, PHP_URL_HOST);
+    $matches = $originHost !== null
+        && ($originHost === $allowed || ($hostHeader !== '' && $originHost === $hostHeader));
+    if (!$matches) {
+        SecurityEvent::log('cross_origin_request_rejected', 'high', $request, ['origin' => $originHeader]);
+        Response::forbidden('Cross-origin requests are not allowed');
+    }
+}
 
 // Security headers
 header('X-Frame-Options: DENY');
@@ -65,6 +85,8 @@ header(
     . "base-uri 'self'"
 );
 header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
+header('Cross-Origin-Resource-Policy: same-origin');
+header('X-Permitted-Cross-Domain-Policies: none');
 if (Config::get('app.env') === 'production') {
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 }
@@ -91,6 +113,7 @@ if (str_starts_with($request->path, '/api/')) {
 $view = match (true) {
     $request->path === '/' => 'public/home',
     $request->path === '/login' => 'public/login',
+    $request->path === '/register' => 'public/register',
     $request->path === '/verify' => 'public/verify',
     $request->path === '/paper' => 'public/paper',
     $request->path === '/portal' => 'citizen/portal',

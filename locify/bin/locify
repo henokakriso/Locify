@@ -100,7 +100,7 @@ switch ($command) {
             $passwordHash = password_hash($password, PASSWORD_ARGON2ID);
             if ($existing !== null) {
                 Database::run(
-                    'UPDATE `user` SET password_hash = ?, status = ?, mfa_enabled = 1 WHERE id = ?',
+                    'UPDATE `user` SET password_hash = ?, status = ?, mfa_enabled = 0 WHERE id = ?',
                     [$passwordHash, 'active', $existing['id']]
                 );
                 Database::run(
@@ -111,7 +111,7 @@ switch ($command) {
             }
             Database::run(
                 'INSERT INTO `user` (id, username_hash, password_hash, status, mfa_enabled)
-                 VALUES (?, ?, ?, ?, 1)',
+                 VALUES (?, ?, ?, ?, 0)',
                 [$userId, $usernameHash, $passwordHash, 'active']
             );
             Database::run(
@@ -140,10 +140,85 @@ switch ($command) {
         }
         break;
 
+    case 'test:totp':
+        require LOCIFY_ROOT . '/app/security/Totp.php';
+        // RFC 6238 appendix-B vectors, base32-encoded secret, 6-digit form.
+        $secret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+        $vectors = [
+            [59, '287082'],
+            [1111111109, '081804'],
+            [1111111111, '050471'],
+            [1234567890, '005924'],
+            [2000000000, '279037'],
+            [20000000000, '353130'],
+        ];
+        $fail = 0;
+        foreach ($vectors as [$t, $expected]) {
+            $got = Totp::codeAt($secret, $t);
+            $ok = $got === $expected;
+            $fail += $ok ? 0 : 1;
+            echo ($ok ? 'PASS' : 'FAIL') . " T=$t => $got (expected $expected)\n";
+        }
+        if ($fail === 0) {
+            $secret = Totp::generateSecret();
+            $code = Totp::codeAt($secret);
+            $recovery = Totp::recoveryCodes(10);
+            echo 'PASS recovery codes: ' . count($recovery) . " generated, unique: " . (count(array_unique($recovery)) === 10 ? 'yes' : 'NO') . "\n";
+            echo "PASS self-verify: " . (Totp::verify($secret, $code) ? 'yes' : 'NO') . "\n";
+        }
+        exit($fail === 0 ? 0 : 1);
+        break;
+
+    case 'db:backup':
+        $db = Config::get('db');
+        $dir = LOCIFY_ROOT . '/storage/backups';
+        if (!is_dir($dir) && !mkdir($dir, 0700, true)) {
+            fwrite(STDERR, "Cannot create backup directory: $dir\n");
+            exit(1);
+        }
+        $file = sprintf('%s/locify-%s.sql.gz', $dir, date('Ymd-His'));
+        $cmd = 'MYSQL_PWD=' . escapeshellarg((string)$db['pass'])
+            . ' mysqldump --no-tablespaces --single-transaction --routines --triggers'
+            . ' -h ' . escapeshellarg((string)$db['host'])
+            . ' -P ' . (int)$db['port']
+            . ' -u ' . escapeshellarg((string)$db['user'])
+            . ' ' . escapeshellarg((string)$db['name'])
+            . ' | gzip -9 > ' . escapeshellarg($file);
+        $pipes = [];
+        $proc = proc_open('sh -c ' . escapeshellarg($cmd), [
+            0 => ['file', '/dev/null', 'r'],
+            1 => ['file', '/dev/null', 'w'],
+            2 => ['pipe', 'w'],
+        ], $pipes);
+        if (!is_resource($proc)) {
+            fwrite(STDERR, "Backup failed.\n");
+            exit(1);
+        }
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        $code = proc_close($proc);
+        if ($code !== 0 || !is_file($file) || filesize($file) === 0) {
+            fwrite(STDERR, "Backup failed: " . trim((string)$stderr) . "\n");
+            exit(1);
+        }
+        printf("Backup written: %s (%d bytes)\n", $file, filesize($file));
+        break;
+
+    case 'db:status':
+        $pdo = dbConnection();
+        $users = $pdo->query('SELECT COUNT(*) FROM `user`')->fetchColumn();
+        $citizens = $pdo->query('SELECT COUNT(*) FROM citizen')->fetchColumn();
+        $audit = $pdo->query('SELECT COUNT(*) FROM audit_log')->fetchColumn();
+        printf("DB ok — users: %d, citizens: %d, audit entries: %d\n", $users, $citizens, $audit);
+        break;
+
     default:
         echo "LOCIFY CLI — Project ARWE\n\n"
             . "  php bin/locify db:setup\n"
+            . "  php bin/locify db:backup\n"
+            . "  php bin/locify db:status\n"
             . "  php bin/locify admin:create\n"
             . "  php bin/locify payments:reconcile\n"
-            . "  php bin/locify test:calendar\n";
+            . "  php bin/locify test:calendar\n"
+            . "  php bin/locify test:totp\n";
 }

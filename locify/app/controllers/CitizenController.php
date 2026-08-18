@@ -61,6 +61,128 @@ final class CitizenController extends Controller
         Response::success(['results' => $results, 'count' => count($results)]);
     }
 
+    /** Bulk CSV import — rows are validated individually; bad rows never abort the batch. */
+    public function import(Request $request): void
+    {
+        $this->requirePermission($request, 'CITIZEN:CREATE');
+        $limiter = new RateLimiter(Database::pdo());
+        if (!$limiter->allow('import:' . $request->ip, 5, $request->ip)) {
+            Response::error('RATE_LIMITED', 'Import limit reached — try again in a few minutes', 429);
+        }
+        $csv = (string)($request->input('csv') ?? '');
+        if ($csv === '') {
+            Response::validationError(['csv' => 'CSV content is required']);
+        }
+        if (strlen($csv) > 2 * 1024 * 1024) {
+            Response::validationError(['csv' => 'CSV is too large (max 2 MB)']);
+        }
+        $rows = self::parseCsv($csv);
+        if ($rows === []) {
+            Response::validationError(['csv' => 'CSV must include a header row: ' . implode(',', self::CSV_COLUMNS)]);
+        }
+        $unknown = array_diff(array_keys($rows[0]), self::CSV_COLUMNS);
+        if ($unknown !== []) {
+            Response::validationError(['csv' => 'Unknown column(s): ' . implode(', ', $unknown)]);
+        }
+        $defaultUnitId = (string)($request->input('admin_unit_id') ?? Auth::$context['scope_unit']);
+        $unit = Database::fetchOne('SELECT id, status FROM admin_unit WHERE id = ?', [$defaultUnitId]);
+        if ($unit === null || $unit['status'] !== 'active') {
+            Response::validationError(['admin_unit_id' => 'Invalid administrative unit']);
+        }
+        Auth::assertInScope($request, $defaultUnitId);
+
+        $result = CitizenService::bulkCreate($request, $rows, $defaultUnitId);
+        Response::json($result, $result['errors'] === [] ? 201 : 207);
+    }
+
+    /** CSV export of citizens within the actor's administrative scope. */
+    public function export(Request $request): void
+    {
+        $this->requirePermission($request, 'CITIZEN:SEARCH');
+        $scope = Auth::$context['scope_subtree'];
+        $rows = Database::fetchAll(
+            'SELECT c.uuid, c.national_id_mask, c.first_name_enc, c.middle_name_enc, c.last_name_enc,
+                    c.local_name_enc, c.dob_eth, c.dob_greg, c.sex, c.status, c.created_at,
+                    au.code AS admin_unit_code, au.name AS admin_unit_name
+             FROM citizen c
+             JOIN citizen_address ca ON ca.citizen_id = c.id AND ca.is_primary = 1
+             JOIN admin_unit au ON au.id = ca.admin_unit_id
+             WHERE ca.admin_unit_id IN (' . implode(',', array_fill(0, count($scope), '?')) . ')
+             ORDER BY c.created_at DESC',
+            $scope
+        );
+
+        $out = fopen('php://output', 'w');
+        if ($out === false) {
+            Response::error('INTERNAL_ERROR', 'Cannot stream export', 500);
+        }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="locify-citizens-' . date('Ymd-His') . '.csv"');
+        header('X-Content-Type-Options: nosniff');
+        echo "\xEF\xBB\xBF"; // UTF-8 BOM for Excel
+        fputcsv($out, self::CSV_COLUMNS);
+        $count = 0;
+        foreach ($rows as $r) {
+            $name = function ($enc) { return self::csvSafe((string)(Crypto::decrypt($enc ?? null) ?? '')); };
+            fputcsv($out, [
+                $r['uuid'],
+                $r['national_id_mask'] ?? '',
+                $name($r['first_name_enc']),
+                $name($r['middle_name_enc']),
+                $name($r['last_name_enc']),
+                $name($r['local_name_enc']),
+                $r['dob_eth'] ?? '',
+                $r['dob_greg'] ?? '',
+                $r['sex'] ?? '',
+                $r['status'],
+                $r['admin_unit_code'] ?? '',
+                $r['admin_unit_name'] ?? '',
+                $r['created_at'],
+            ]);
+            $count++;
+        }
+        fclose($out);
+        Audit::log($request, 'EXPORT_CITIZENS', 'citizen', null, null, ['rows' => $count]);
+        exit;
+    }
+
+    private const CSV_COLUMNS = [
+        'national_id', 'first_name', 'middle_name', 'last_name', 'local_name',
+        'dob_eth', 'sex', 'phone', 'email', 'village', 'house_no', 'admin_unit_code',
+    ];
+
+    /** @return list<array<string,string>> rows keyed by header */
+    private static function parseCsv(string $csv): array
+    {
+        $stream = fopen('php://temp', 'r+');
+        fwrite($stream, $csv);
+        rewind($stream);
+        $rows = [];
+        $header = null;
+        while (($line = fgetcsv($stream, 0, ',')) !== false) {
+            if ($header === null) {
+                $header = array_map(fn($c) => trim((string)$c), $line);
+                continue;
+            }
+            $row = [];
+            foreach ($header as $i => $col) {
+                if ($col === '') {
+                    continue;
+                }
+                $row[$col] = ($line[$i] ?? '');
+            }
+            $rows[] = $row;
+        }
+        fclose($stream);
+        return $rows;
+    }
+
+    /** Neutralize CSV formula injection (=, +, -, @ prefixes). */
+    private static function csvSafe(string $value): string
+    {
+        return preg_match('/^[=+\-@\t\r]/', $value) ? "'" . $value : $value;
+    }
+
     public function verify(Request $request): void
     {
         $this->requirePermission($request, 'CITIZEN:VERIFY_INITIATE');

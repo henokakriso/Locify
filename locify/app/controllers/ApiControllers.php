@@ -158,13 +158,18 @@ final class DocumentController extends Controller
         $this->requirePermission($request, 'DOCUMENT:VIEW');
         $scope = Auth::$context['scope_subtree'];
         $rows = Database::fetchAll(
-            'SELECT d.uuid, d.document_number, d.document_type, d.title, d.status, d.created_at
+            'SELECT d.uuid, d.document_number, d.document_type, d.title, d.status, d.verification_code,
+                    d.created_at, d.citizen_id, a.application_number
              FROM document d
              JOIN application a ON a.id = d.application_id
              WHERE a.admin_unit_id IN (' . implode(',', array_fill(0, count($scope), '?')) . ')
              ORDER BY d.created_at DESC LIMIT 200',
             $scope
         );
+        foreach ($rows as &$row) {
+            $row['citizen_name'] = citizenFullName(Database::pdo(), (string)$row['citizen_id']);
+        }
+        unset($row);
         Response::success(['documents' => $rows]);
     }
 }
@@ -228,8 +233,26 @@ final class AppointmentController extends Controller
     {
         $this->requirePermission($request, 'APPOINTMENT:CREATE');
         Validator::requireFields($request, ['office_id', 'service_id', 'slot_start', 'slot_end']);
-        if (Auth::$context['citizen_id'] === null) {
-            Response::forbidden('Citizen account required');
+        $citizenId = Auth::$context['citizen_id'];
+        if ($citizenId === null) {
+            // Officer-assisted booking: the officer books on behalf of a citizen.
+            $citizenUuid = (string)$request->input('citizen_uuid');
+            if (!isValidUuid($citizenUuid)) {
+                Response::validationError(['citizen_uuid' => 'Required when booking on behalf of a citizen']);
+            }
+            $citizen = Database::fetchOne(
+                'SELECT id, uuid, status FROM citizen WHERE uuid = ?',
+                [$citizenUuid]
+            );
+            if ($citizen === null || $citizen['status'] !== 'active') {
+                Response::validationError(['citizen_uuid' => 'Unknown or unverified citizen']);
+            }
+            $unit = Database::fetchOne(
+                'SELECT admin_unit_id FROM citizen_address WHERE citizen_id = ? AND is_primary = 1',
+                [$citizen['id']]
+            );
+            Auth::assertInScope($request, $unit['admin_unit_id'] ?? Auth::$context['scope_unit']);
+            $citizenId = $citizen['id'];
         }
         $conflict = Database::fetchOne(
             'SELECT id FROM appointment WHERE office_id = ? AND slot_start = ? AND status IN (?, ?)',
@@ -238,15 +261,37 @@ final class AppointmentController extends Controller
         if ($conflict !== null) {
             Response::error('SLOT_TAKEN', 'Slot is no longer available', 409);
         }
+        // Capacity (spec §19-§20): office.max_daily_appointments limits bookings per day.
+        $office = Database::fetchOne('SELECT * FROM office WHERE id = ? AND is_active = 1', [$request->input('office_id')]);
+        if ($office === null) {
+            Response::notFound('Office not found');
+        }
+        $maxDaily = $office['max_daily_appointments'] !== null ? (int)$office['max_daily_appointments'] : null;
+        if ($maxDaily !== null && $maxDaily > 0) {
+            $day = substr((string)$request->input('slot_start'), 0, 10);
+            $counted = (int)(Database::fetchOne(
+                'SELECT COUNT(*) AS n FROM appointment
+                 WHERE office_id = ? AND slot_start >= ? AND slot_start < ?
+                   AND status IN (?, ?, ?, ?)',
+                [$office['id'], $day . ' 00:00:00',
+                 date('Y-m-d', strtotime($day . ' +1 day')) . ' 00:00:00',
+                 'booked', 'confirmed', 'checked_in', 'in_service']
+            )['n'] ?? 0);
+            if ($counted >= $maxDaily) {
+                Response::error('CAPACITY_REACHED',
+                    'This office has reached its daily appointment limit. Choose another day.', 409);
+            }
+        }
         $id = uuid4();
+        $number = nextAppointmentNumber(Database::pdo());
         Database::run(
-            'INSERT INTO appointment (id, citizen_id, office_id, service_catalog_id, slot_start, slot_end, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [$id, Auth::$context['citizen_id'], $request->input('office_id'), $request->input('service_id'),
+            'INSERT INTO appointment (id, appointment_number, citizen_id, office_id, service_catalog_id, slot_start, slot_end, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [$id, $number, $citizenId, $request->input('office_id'), $request->input('service_id'),
              $request->input('slot_start'), $request->input('slot_end'), 'booked']
         );
         Audit::log($request, 'BOOK_APPOINTMENT', 'appointment', $id);
-        Response::success(['id' => $id, 'status' => 'booked'], 201);
+        Response::success(['id' => $id, 'appointment_number' => $number, 'status' => 'booked'], 201);
     }
 
     public function confirm(Request $request): void
@@ -268,19 +313,25 @@ final class AppointmentController extends Controller
     public function index(Request $request): void
     {
         $this->requirePermission($request, 'APPOINTMENT:MANAGE');
-        if (Auth::isCitizen($request)) {
+if (Auth::isCitizen($request)) {
             $rows = Database::fetchAll(
-                'SELECT id, slot_start, slot_end, status, created_at FROM appointment WHERE citizen_id = ? ORDER BY slot_start DESC LIMIT 50',
+                'SELECT id, appointment_number, slot_start, slot_end, status, created_at
+                 FROM appointment WHERE citizen_id = ? ORDER BY slot_start DESC LIMIT 50',
                 [Auth::$context['citizen_id']]
             );
         } else {
             $rows = Database::fetchAll(
-                'SELECT a.id, a.slot_start, a.slot_end, a.status, a.created_at, o.name AS office_name
+                'SELECT a.id, a.appointment_number, a.slot_start, a.slot_end, a.status, a.created_at,
+                        a.citizen_id, o.name AS office_name
                  FROM appointment a JOIN office o ON o.id = a.office_id
                  WHERE o.admin_unit_id IN (' . implode(',', array_fill(0, count(Auth::$context['scope_subtree']), '?')) . ')
                  ORDER BY a.slot_start DESC LIMIT 200',
                 Auth::$context['scope_subtree']
             );
+            foreach ($rows as &$row) {
+                $row['citizen_name'] = citizenFullName(Database::pdo(), (string)$row['citizen_id']);
+            }
+            unset($row);
         }
         Response::success(['appointments' => $rows]);
     }
@@ -301,6 +352,53 @@ final class AppointmentController extends Controller
         Database::run("UPDATE appointment SET status = 'cancelled' WHERE id = ?", [$appt['id']]);
         Audit::log($request, 'CANCEL_APPOINTMENT', 'appointment', $appt['id']);
         Response::success(['status' => 'cancelled']);
+    }
+
+    /** Office check-in of the citizen at the desk (spec §19). */
+    public function checkIn(Request $request): void
+    {
+        $this->requirePermission($request, 'APPOINTMENT:MANAGE');
+        $appt = Database::fetchOne('SELECT id, status FROM appointment WHERE id = ?', [$request->routeParams['uuid']]);
+        if ($appt === null) {
+            Response::notFound('Appointment not found');
+        }
+        if (!in_array($appt['status'], ['booked', 'confirmed'], true)) {
+            Response::error('INVALID_STATE', 'Only booked or confirmed appointments can be checked in', 409);
+        }
+        Database::run(
+            "UPDATE appointment SET status = 'checked_in', checked_in_at = NOW() WHERE id = ?",
+            [$appt['id']]
+        );
+        Audit::log($request, 'CHECK_IN_APPOINTMENT', 'appointment', $appt['id']);
+        Response::success(['id' => $appt['id'], 'status' => 'checked_in']);
+    }
+
+    /** Complete the in-person service; records missed appointments too. */
+    public function finish(Request $request): void
+    {
+        $this->requirePermission($request, 'APPOINTMENT:MANAGE');
+        $appt = Database::fetchOne('SELECT id, status FROM appointment WHERE id = ?', [$request->routeParams['uuid']]);
+        if ($appt === null) {
+            Response::notFound('Appointment not found');
+        }
+        $action = (string)($request->input('action') ?? 'complete');
+        if ($action === 'missed') {
+            if (!in_array($appt['status'], ['booked', 'confirmed', 'checked_in'], true)) {
+                Response::error('INVALID_STATE', 'Appointment is already resolved', 409);
+            }
+            Database::run("UPDATE appointment SET status = 'missed' WHERE id = ?", [$appt['id']]);
+            Audit::log($request, 'MARK_MISSED_APPOINTMENT', 'appointment', $appt['id']);
+            Response::success(['id' => $appt['id'], 'status' => 'missed']);
+        }
+        if (!in_array($appt['status'], ['checked_in', 'in_service'], true)) {
+            Response::error('INVALID_STATE', 'Only attended appointments can be completed', 409);
+        }
+        Database::run(
+            "UPDATE appointment SET status = 'completed', completed_at = NOW() WHERE id = ?",
+            [$appt['id']]
+        );
+        Audit::log($request, 'COMPLETE_APPOINTMENT', 'appointment', $appt['id']);
+        Response::success(['id' => $appt['id'], 'status' => 'completed']);
     }
 }
 
@@ -950,8 +1048,35 @@ public function assignRole(Request $request): void
             Response::validationError(['status' => 'Invalid status']);
         }
         $uuid = $request->routeParams['uuid'];
-        if (!Database::fetchOne('SELECT id FROM `user` WHERE id = ?', [$uuid])) {
+        $target = Database::fetchOne('SELECT id, status FROM `user` WHERE id = ?', [$uuid]);
+        if ($target === null) {
             Response::notFound('User not found');
+        }
+        // Lockout guard: the last active administrator must never deactivate
+        // themselves or the whole platform becomes unreachable.
+        if ($status !== 'active' && $uuid === Auth::$context['user_id']) {
+            $others = Database::fetchOne(
+                "SELECT COUNT(*) AS active_admins FROM `user` u
+                 JOIN user_role ur ON ur.user_id = u.id AND ur.is_active = 1
+                 JOIN role r ON r.id = ur.role_id
+                 WHERE u.status = 'active' AND u.id != ?
+                   AND r.name IN ('system_admin', 'woreda_admin', 'kebele_admin')",
+                [$uuid]
+            );
+            if ((int)($others['active_admins'] ?? 0) === 0) {
+                Audit::log($request, 'UPDATE_USER_STATUS', 'user', $uuid, result: 'denied',
+                    reason: 'self-deactivation as last active administrator');
+                Response::error('LAST_ADMIN',
+                    'You are the only active administrator. Create or activate another admin account first.', 409);
+            }
+            // Revoke this session's tokens so the self-deactivation applies now.
+            $claims = Auth::$context['claims'] ?? [];
+            if (!empty($claims['jti'])) {
+                Database::run(
+                    'INSERT IGNORE INTO token_denylist (jti, user_id, expires_at) VALUES (?, ?, ?)',
+                    [$claims['jti'], $uuid, date('Y-m-d H:i:s', (int)($claims['exp'] ?? time()))]
+                );
+            }
         }
         Database::run('UPDATE `user` SET status = ?, locked_until = NULL WHERE id = ?', [$status, $uuid]);
         Audit::log($request, 'UPDATE_USER_STATUS', 'user', $uuid, null, ['status' => $status]);
@@ -1025,5 +1150,30 @@ final class SyncController extends Controller
         }
         Audit::log($request, 'SYNC_ACK', 'sync_queue', null, null, ['acked' => $updated]);
         Response::success(['synced' => $updated]);
+    }
+}
+
+final class HealthController extends Controller
+{
+    /** Public health check — no personal data, rate limited, DB kept in the loop. */
+    public function health(Request $request): void
+    {
+        $limiter = new RateLimiter(Database::pdo());
+        if (!$limiter->allow('health:' . $request->ip, (int)Config::get('rate_limit.public', 30), $request->ip)) {
+            Response::error('RATE_LIMITED', 'Too many requests', 429);
+        }
+        try {
+            Database::fetchOne('SELECT 1');
+            $db = 'up';
+        } catch (Throwable) {
+            $db = 'down';
+        }
+        Response::success([
+            'status' => $db === 'up' ? 'ok' : 'degraded',
+            'service' => 'locify',
+            'version' => '2.1',
+            'database' => $db,
+            'time' => date('c'),
+        ], $db === 'up' ? 200 : 503);
     }
 }

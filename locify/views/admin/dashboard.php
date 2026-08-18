@@ -10,9 +10,13 @@
       <a href="#" data-view="offices">Offices</a>
       <a href="#" data-view="users">Users & Roles</a>
       <a href="#" data-view="services-config">Services</a>
+      <a href="#" data-view="digital">Digital Services</a>
       <a href="#" data-view="institutions">Institutions</a>
+      <a href="#" data-view="citizens">Citizens (Import/Export)</a>
+      <a href="#" data-view="residents">Residents</a>
       <a href="#" data-view="reports">Reports</a>
       <a href="#" data-view="audit">Audit Log</a>
+      <a href="#" id="security-link">Security (2FA)</a>
       <a href="#" id="change-password-link">Change Password</a>
       <a href="#" id="logout-link">Logout</a>
     </nav>
@@ -28,7 +32,10 @@
   </main>
 </div>
 
+<script src="/assets/js/qrcode.js"></script>
 <script src="/assets/js/api.js"></script>
+<script src="/assets/js/residents.js"></script>
+<script src="/assets/js/digital.js"></script>
 <script>
 const content = document.getElementById("content");
 const alertBox = document.getElementById("alert");
@@ -38,6 +45,8 @@ const views = document.querySelectorAll("#nav a[data-view]");
 const TITLES = {
   overview: "Overview", units: "Administrative Units", offices: "Offices", users: "Users & Roles",
   "services-config": "Service Configuration", institutions: "Institutions",
+  "digital": "Digital Kebele Services",
+  citizens: "Citizens (Import/Export)", residents: "Resident Management",
   reports: "Reports", audit: "Audit Log",
 };
 
@@ -356,8 +365,19 @@ async function loadUsers() {
           class: "btn btn-sm " + (u.status === "active" ? "btn-danger" : "btn"),
           text: u.status === "active" ? "Deactivate" : "Activate",
           onclick: async () => {
+            const isSelf = u.id === API.getUser()?.user_id;
+            if (isSelf && u.status === "active" &&
+                !confirm("This is YOUR account. Deactivating it logs you out immediately.\n\n"
+                       + "If you are the last active administrator, the platform will reject the change.")) {
+              return;
+            }
             try {
               await API.put("/admin/users/" + u.id + "/status", { status: u.status === "active" ? "inactive" : "active" });
+              if (isSelf) {
+                showAlert(alertBox, "Your account was deactivated — you are now logged out.", "success");
+                API.logout();
+                return;
+              }
               loadUsers();
             } catch (err) { showAlert(alertBox, err.message); }
           },
@@ -647,8 +667,188 @@ async function loadInstitutions() {
 const LOADERS = {
   overview: loadOverview, units: loadUnits, offices: loadOffices, users: loadUsers,
   "services-config": loadServicesConfig, institutions: loadInstitutions,
+  citizens: loadCitizens, residents: loadResidents, digital: loadDigital,
   reports: loadReports, audit: loadAudit,
 };
+
+const CSV_TEMPLATE = "national_id,first_name,middle_name,last_name,local_name,dob_eth,sex,phone,email,village,house_no,admin_unit_code\n"
+  + "1234567890123,Abebe,Bekele,Tesfaye,,2008-04-12,M,,,Kebele 02,041,ET-AA-06-02\n"
+  + ",Almaz,,Kebede,,1995-09-03,F,0911223344,,Kebele 01,012,\n";
+
+async function loadCitizens() {
+  const [units, dash] = await Promise.all([API.get("/admin/units"), API.get("/reports/dashboard")]);
+  content.innerHTML = "";
+  content.append(el("h2", { text: "Citizen registry — bulk operations" }));
+  content.append(el("p", { class: "muted", text: "Import digitizes paper records in batches (max 500 rows). Every row is validated and audited; duplicates and bad rows are reported, never silently dropped." }));
+
+  content.append(el("h3", { class: "mt-2", text: "Import CSV" }));
+  const form = el("form", { class: "card mt-1" }, [
+    el("div", { class: "grid grid-3" }, [
+      el("div", {}, [
+        el("label", { text: "Target administrative unit" }),
+        el("select", { name: "admin_unit_id" },
+          units.admin_units.filter(u => u.type === "kebele" || u.status === "active")
+            .map(u => el("option", { value: u.id, text: u.type + ": " + u.name }))),
+        el("p", { class: "muted", style: "font-size:.78rem; margin-top:.35rem" },
+          "Rows may override the unit per-line with admin_unit_code."),
+      ]),
+      el("div", { style: "grid-column: span 2" }, [
+        el("label", { text: "CSV content" }),
+        el("textarea", { name: "csv", rows: 6, style: "font-family:monospace; font-size:.8rem", required: true, placeholder: CSV_TEMPLATE }),
+        el("p", { class: "muted", style: "font-size:.78rem; margin-top:.35rem" },
+          "Columns: " + "national_id, first_name (required), middle_name, last_name (required), local_name, dob_eth (YYYY-MM-DD, Ethiopian calendar), sex (M/F/O), phone, email, village, house_no, admin_unit_code"),
+      ]),
+    ]),
+    el("button", { class: "btn btn-gold mt-2", type: "submit", text: "Import CSV" }),
+  ]);
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    form.querySelector("button").disabled = true;
+    try {
+      const res = await API.post("/citizens/import", {
+        csv: form.elements.csv.value,
+        admin_unit_id: form.elements.admin_unit_id.value,
+      });
+      const created = res.created?.length || 0;
+      const errors = res.errors || [];
+      content.querySelector("#import-result")?.remove();
+      const box = el("div", { id: "import-result", class: "card mt-1" }, [
+        el("h4", { text: "Result: " + created + " imported, " + errors.length + " errors" }),
+      ]);
+      if (errors.length) {
+        const table = el("table", { class: "mt-1" }, [el("thead", {}, [el("tr", {}, [
+          el("th", { text: "Line" }), el("th", { text: "Problem" }),
+        ])])]);
+        const tbody = el("tbody");
+        for (const err of errors.slice(0, 50)) {
+          tbody.append(el("tr", {}, [el("td", { text: "#" + err.line }), el("td", { text: err.error })]));
+        }
+        table.append(tbody);
+        box.append(table);
+      }
+      content.append(box);
+      showAlert(alertBox, "Import finished", "success");
+    } catch (err) { showAlert(alertBox, err.message); }
+    finally { form.querySelector("button").disabled = false; }
+  });
+  content.append(form);
+
+  content.append(el("h3", { class: "mt-2", text: "Export CSV" }));
+  content.append(el("p", { class: "muted", text: "All citizens in your administrative scope, decrypted names, national IDs masked." }));
+  content.append(el("div", { class: "row mt-1" }, [
+    el("button", {
+      class: "btn", text: "Download citizens.csv (" + (dash.citizens_total || 0) + " records)",
+      onclick: async (e) => {
+        const btnEl = e.target;
+        btnEl.disabled = true;
+        try {
+          const res = await fetch(API.base + "/citizens/export", {
+            headers: { Authorization: "Bearer " + API.getToken() },
+          });
+          if (!res.ok) throw new Error("Export failed (" + res.status + ")");
+          const blob = await res.blob();
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "locify-citizens.csv";
+          a.click();
+          URL.revokeObjectURL(a.href);
+        } catch (err) { showAlert(alertBox, err.message); }
+        finally { btnEl.disabled = false; }
+      },
+    }),
+  ]));
+}
+
+let setupSecret = null;
+
+async function loadSecurity() {
+  const user = API.getUser();
+  content.innerHTML = "";
+  content.append(el("h2", { text: "Security — two-factor authentication" }));
+  content.append(el("p", { class: "muted", text: "When enabled, every sign-in requires a code from your authenticator app. Recovery codes are issued once and stored only as hashes — print them and keep them offline." }));
+
+  const card = el("div", { class: "card mt-1", style: "max-width:560px" }, []);
+  const mfaOn = !!user.mfa_enabled;
+
+  if (mfaOn) {
+    const remaining = await API.get("/auth/mfa/recovery");
+    card.append(el("h4", { text: "2FA is active" }));
+    card.append(el("div", { class: "badge badge-green", text: "Enabled" }));
+    card.append(el("p", { class: "muted mt-1", text: "Recovery codes remaining: " + remaining.remaining_codes }));
+    const disableForm = el("form", { class: "mt-2" }, [
+      el("label", { text: "Current authenticator code (to disable)" }),
+      el("div", { class: "row" }, [
+        el("input", { name: "code", inputmode: "numeric", required: true, style: "max-width:180px" }),
+        el("button", { class: "btn btn-danger", type: "submit", text: "Disable 2FA" }),
+      ]),
+    ]);
+    disableForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await API.post("/auth/mfa/disable", { code: disableForm.elements.code.value.trim() });
+        showAlert(alertBox, "Two-factor authentication disabled", "success");
+        API.getUser().mfa_enabled = false;
+        loadSecurity();
+      } catch (err) { showAlert(alertBox, err.message); }
+    });
+    card.append(disableForm);
+  } else {
+    card.append(el("h4", { text: "2FA is not enabled" }));
+    const setupBtn = el("button", {
+      class: "btn btn-gold mt-1", text: "Start setup",
+      onclick: async (e) => {
+        e.target.disabled = true;
+        try {
+          const setup = await API.post("/auth/mfa/setup", {});
+          setupSecret = setup.secret;
+          renderSetup(card, setup);
+        } catch (err) { showAlert(alertBox, err.message); }
+        finally { e.target.disabled = false; }
+      },
+    });
+    card.append(setupBtn);
+  }
+  content.append(card);
+}
+
+function renderSetup(card, setup) {
+  card.innerHTML = "";
+  card.append(el("h4", { text: "Scan this QR code with your authenticator app" }));
+  card.append(el("p", { class: "muted", text: "Google Authenticator, Authy, Microsoft Authenticator or any standard TOTP app." }));
+
+  const canvas = el("canvas", { style: "max-width:220px; max-height:220px; image-rendering:pixelated; margin-top:.5rem" });
+  if (window.QR) QR.drawInto(canvas, setup.otpauth_url, 4, 2);
+  card.append(canvas);
+
+  card.append(el("p", { class: "mono muted mt-1", text: "Manual entry: " + setup.secret }));
+
+  const confirmForm = el("form", { class: "mt-2" }, [
+    el("label", { text: "Enter the 6-digit code from your app" }),
+    el("div", { class: "row" }, [
+      el("input", { name: "code", inputmode: "numeric", required: true, style: "max-width:180px" }),
+      el("button", { class: "btn btn-gold", type: "submit", text: "Activate 2FA" }),
+    ]),
+  ]);
+  confirmForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      const res = await API.post("/auth/mfa/enable", {
+        secret: setupSecret,
+        code: confirmForm.elements.code.value.trim(),
+      });
+      card.innerHTML = "";
+      card.append(el("h4", { class: "badge badge-green", text: "2FA enabled" }));
+      card.append(el("p", { class: "mt-1", text: "Write these recovery codes down now — they are shown only once:" }));
+      const codes = el("pre", { class: "mono card mt-1", style: "padding:1rem; line-height:1.7" });
+      res.recovery_codes.forEach(c => codes.append(c + "\n"));
+      card.append(codes);
+      card.append(el("p", { class: "muted", text: "Keep them offline. Each code works once to sign in if you lose your phone." }));
+      API.getUser().mfa_enabled = true;
+      setupSecret = null;
+    } catch (err) { showAlert(alertBox, err.message); }
+  });
+  card.append(confirmForm);
+}
 
 function showChangePassword() {
   content.innerHTML = "";
@@ -696,6 +896,14 @@ document.getElementById("change-password-link").addEventListener("click", (e) =>
   pageTitle.textContent = "Change Password";
   alertBox.innerHTML = "";
   showChangePassword();
+});
+
+document.getElementById("security-link").addEventListener("click", (e) => {
+  e.preventDefault();
+  views.forEach(v => v.classList.remove("active"));
+  pageTitle.textContent = "Security (2FA)";
+  alertBox.innerHTML = "";
+  loadSecurity().catch(err => showAlert(alertBox, err.message));
 });
 
 document.getElementById("logout-link").addEventListener("click", (e) => {
