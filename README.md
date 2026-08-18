@@ -32,15 +32,35 @@ synchronization keeps copies consistent when connectivity returns.
 
 ## Features
 
-- Citizen management
-- Kebele management and administrative hierarchy
-- User management, authentication, authorization, RBAC
-- Service management and applications with workflows
-- Document management and digital document verification
-- Appointments and queue management
-- Complaints
-- Payments
-- Reports and audit logging
+- **Digital Kebele Services (DKS) full lifecycle** — dynamic service catalog
+  (per-service fields, issuance modes, SLA timers, notification templates),
+  applications with duplicate + citizen-verification guards, Service IDs for
+  public tracking, and a step-driven workflow engine
+    (`next | approve | reject | cancel | hold | resume | mark-ready | complete
+    | request-correction | return | submit-correction`)
+- **Citizen self-service** — rate-limited public registration (E.C. DOB,
+  kebele picker, password policy) and a citizen portal: track application by
+  Service ID, profile with masked NID/phone, dynamic forms, Fix & resubmit,
+  notification badge
+- **Document issuing & reissue** — service-aware numbers `LOC-{y}-{unit}-{svc}
+  -{seq}`, print-required documents, issue with E.C./G.C. dates, digital
+  delivery, `requested_document_id` reissue flow from the citizen's own printed
+  documents
+- **Print jobs** — queued with reason/reprint, 3-attempt cap, start/complete/
+  fail/cancel lifecycle and JOB_EXISTS guard
+- **Attachment uploads** — finfo-validated PDF/JPG/PNG (≤ 8 MB), encrypted at
+  rest, officer verify/reject review
+- **Appointments & queue** — office daily capacity (`CAPACITY_REACHED`), book
+  on behalf, check-in → finish (complete/missed)
+- **Resident management** — registration, verification and resident records
+- **Amharic/SMS notifications** — status changes push through
+  NotificationService (audit + per-event templates)
+- **TOTP two-factor authentication** — RFC 6238 with QR setup, hashed
+  one-time recovery codes, optional `MFA_ENFORCED`
+- Citizen management and **Kebele administrative hierarchy** (zone → woreda →
+  kebele) with RBAC and admin-unit scoping
+- Payments (mock mode until an official integration is approved), reports and
+  append-only audit logging
 - Offline Kebele local servers with C-based synchronization
 
 ## Architecture
@@ -63,15 +83,15 @@ synchronization keeps copies consistent when connectivity returns.
 ```
 locify/
 ├── api/        REST API (auth, citizens, kebeles, services, documents, …)
-├── app/        PHP application
-├── bin/        C binaries (locify)
-├── c/          C components (sync, devices, security, services)
-├── config/     Configuration
-├── database/   Schema (schema.sql), migrations, seeds
-├── public/     Web root
-├── storage/    Storage
+├── app/        PHP application (core, security, middleware, services, controllers, helpers)
+├── bin/        CLI administration tool (db:setup/backup/status, admin:create, tests)
+├── c/          C services (offline sync agent, security integrity monitor)
+├── config/     Configuration (.env)
+├── database/   Schema (schema.sql), migrations (005–009), seeds
+├── public/     Web root (front controller, assets, views)
+├── storage/    Local data (encrypted artifacts, backups, SQLite sync queue)
 ├── tests/      Test suites
-└── views/      Views
+└── views/      Views (public, citizen, admin)
 ```
 
 ## Technology
@@ -90,48 +110,67 @@ frameworks.
 
 ## Installation
 
-Requirements: PHP, a C compiler (`make`, `gcc`) and MySQL/MariaDB.
+Requirements: PHP 8.2+ (`pdo_mysql`, `openssl`, `mbstring`), MySQL 8.x /
+MariaDB 10.6+, and optionally `gcc`/`libcurl`/`libssl-dev` for the C services.
 
 ```bash
-# 1. Create the database
-mysql -u root -p -e "CREATE DATABASE locify CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -p locify < database/schema.sql
-# apply database/migrations/* in order, then load database/seeds/*
+# 1. Configure
+cp .env.example .env        # set APP_KEY, JWT_SECRET, DB_* credentials
 
-# 2. Build the C layer (sync, devices, security)
-make -C c
+# 2. Create the database (schema + seed, idempotent)
+php bin/locify db:setup
 
-# 3. Serve the web app
-php -S 127.0.0.1:8081 -t public public/index.php
+# 3. Create the system administrator
+php bin/locify admin:create   # 12+ character password
+
+# 4. Serve the web app (all requests through public/index.php)
+php -S 127.0.0.1:8080 -t public public/index.php
 ```
 
-Adjust DB credentials in `config/config.php` to match your server.
+Available CLI commands: `db:setup`, `db:backup` (gzip mysqldump into
+`storage/backups`), `db:status` (health + row counts), `admin:create`,
+`payments:reconcile`, `test:calendar`, `test:totp`.
 
 ## Usage
 
-Open the served URL in a browser and sign in with a seeded Kebele
-administrator (see `database/seeds/` for accounts and passwords). From the
+Open the served URL in a browser and sign in with the administrator created
+above (or a seeded Kebele administrator — see `database/seeds/`). From the
 dashboard:
 
-- Manage **citizens** and the **Kebele hierarchy** (zone → woreda → kebele)
-- Run **services and applications** through their workflows
-- Handle **documents** and verify digitally issued documents
+- **Registration → verification** — citizens self-register at `/register`;
+  officers verify them, then they can apply for services at their kebele
+- **DKS lifecycle** — apply (dynamic catalog forms) → track by Service ID →
+  corrections (fix & resubmit) → hold/resume → mark-ready → document sign/
+  issue with GNKS code verification → print cycle → complete → appointment
+  check-in/finish, with Amharic/SMS notifications at every step
+- Manage **citizens/residents** and the **Kebele hierarchy**
+- Handle **documents, print jobs and attachment reviews** (verify/reject)
 - Run **appointments/queue**, **complaints** and **payments**
 - Use the **offline LAN mode** on low-connectivity sites — C utilities keep
   local servers consistent and sync when connectivity returns
 
-Run the suites under `tests/` to verify the deployment.
+Run the suites under `tests/` (calendar, TOTP) to verify the deployment.
 
 ## Security
 
 - **Strict data isolation** — each Kebele's data is a separate boundary; cross-
-  Kebele access is denied by construction.
-- **RBAC** — role-based control over citizen, service, payment and
-  administrative actions.
-- **C-based security utilities** — cryptographic and integrity operations
-  execute in the system layer.
-- **Audit logging** — administrative and service actions are recorded for
-  accountability.
+  Kebele access is denied by construction (admin-unit subtree scope).
+- **Two-factor authentication** — per-account TOTP (RFC 6238, 30 s, 6 digits)
+  with QR setup, ten one-time recovery codes (stored hashed), and a 3-minute
+  login challenge; `MFA_ENFORCED=true` blocks login until setup completes.
+- **RBAC** — every protected route requires a permission, checked against the
+  actor's administrative scope.
+- **Encryption at rest** — citizen fields are AES-256-GCM encrypted with
+  per-record random nonces (`APP_KEY`); uploads are encrypted on disk.
+- **CSRF defense-in-depth** — state-changing browser requests are rejected
+  unless the `Origin` matches the configured application URL.
+- **Rate limiting** — login 10/min, MFA 5/min, import 5/min, officers
+  300/min, public 30/min; client IPs honored only behind `TRUST_PROXY`.
+- **CSV safety** — import validates every row (duplicates reported, not
+  aborted); export neutralizes spreadsheet formula injection.
+- **Audit immutability** — `audit_log` and `security_event` are append-only,
+  enforced by database triggers (failed logins, permission denials, tampering,
+  cross-origin rejections are logged continuously).
 - **Offline-first** — no dependency on external cloud services or third-party
   runtimes.
 
@@ -142,7 +181,7 @@ Screenshots will be added here as the interface is finalized.
 ## Roadmap
 
 - Field deployment kit: assisted LAN setup and offline sync bootstrapping
-- Digital signature flows for Kebele-issued certificates
+- Expand seeded service catalog (additional certificate types and fees)
 - Arabic/Amharic localization pass
 - Inter-Kebele electronic services and verification
 - Integration with sibling ARWE platforms (TerraChain, Govyx, Edunex)
