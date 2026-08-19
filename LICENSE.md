@@ -1,4 +1,4 @@
-<h1>ARWE Public Source License (ARWE-PSL) v1.0</h1>
+# ARWE Public Source License (ARWE-PSL) v1.0
 
 Copyright © 2026 Henok Akriso. All rights reserved.
 Developer / Project Alias: Sergio
@@ -6,7 +6,7 @@ Founder of Halziz
 
 ---
 
-<h2>1. Purpose</h2>
+## 1. Purpose
 
 The ARWE Public Source License (ARWE-PSL) is a custom software license created by Henok Akriso, also known as Sergio, to permit broad use, modification, integration, distribution, and commercial use of software while preserving the identity, authorship, copyright, and trademarks of the original creator.
 
@@ -16,15 +16,15 @@ This license is a custom license, not an OSI-approved standard license. It grant
 
 ---
 
-<h2>2. Definitions</h2>
+## 2. Definitions
 
-<h3>2.1 Software</h3>
+### 2.1 Software
 
 Software means the source code, compiled code, documentation, configuration files, scripts, assets, examples, and other materials distributed under this License.
 
 This definition is intentionally broad. It covers not only human-readable source code but also compiled binaries, documentation, configuration files, scripts, assets, examples, and any other materials distributed with the project. This breadth ensures that all parts of a project are governed by the same terms, preventing a user from taking code but ignoring license obligations for related documentation or assets.
 
-<h3>2.2 Original Author</h3>
+### 2.2 Original Author
 
 Original Author means:
 
@@ -33,25 +33,25 @@ Developer / Project Alias: Sergio
 
 The Original Author is identified as Henok Akriso, with the developer alias Sergio. This dual identification matters because attribution obligations require both the legal name and the alias to be preserved where reasonably possible. It also protects the author's personal and professional identity.
 
-<h3>2.3 Project</h3>
+### 2.3 Project
 
 Project means the software project distributed together with this License.
 
 Project refers to the specific software project that carries this license. It is not a general reference to any software. This term is used throughout the license to distinguish the original work from forks, derivatives, and unrelated projects.
 
-<h3>2.4 Derivative Work</h3>
+### 2.4 Derivative Work
 
 Derivative Work means a modified, extended, adapted, translated, integrated, or otherwise altered version of the Software.
 
 A derivative work includes any version of the Software that has been modified, extended, adapted, translated, integrated into another system, or altered in any way. This definition is important because the license's attribution and preservation requirements apply to derivative works, not just verbatim copies. It also clarifies that closed-source derivatives are permitted, but they still carry attribution obligations.
 
-<h3>2.5 Attribution</h3>
+### 2.5 Attribution
 
 Attribution means appropriate credit identifying the Original Author and, where reasonably possible, the original Project.
 
 Attribution is defined as appropriate credit to the Original Author and, where reasonably possible, to the original Project. This means users must give credit to Henok Akriso and, when practical, to the project name. The term "appropriate" is flexible to allow different kinds of software to use different reasonable methods of credit, as explained in Section 9.
 
-<h3>2.6 Trademark</h3>
+### 2.6 Trademark
 
 Trademark includes names, logos, symbols, marks, service marks, product names, project names, visual identities, and other branding associated with the Original Author, Halziz, or the Project.
 
@@ -59,7 +59,7 @@ Trademark is defined broadly to cover all forms of branding, including names, lo
 
 ---
 
-<h2>3. Copyright Ownership</h2>
+## 3. Copyright Ownership
 
 The Software remains the intellectual property of the Original Author and its respective contributors.
 
@@ -73,28 +73,28 @@ This section confirms that copyright ownership does not change just because the 
 
 ---
 
-<h2>4. Permission Grant</h2>
+## 4. Permission Grant
 
 Subject to compliance with this License, permission is granted, free of charge, to any person obtaining a copy of the Software to:
 
-<h2>1. Use the Software.</h2>
-<h2>2. Copy the Software.</h2>
-<h2>3. Study the Software.</h2>
-<h2>4. Modify the Software.</h2>
-<h2>5. Adapt the Software.</h2>
-<h2>6. Integrate the Software into other software.</h2>
-<h2>7. Create Derivative Works.</h2>
-<h2>8. Distribute the Software.</h2>
-<h2>9. Distribute Derivative Works.</h2>
-<h2>10. Use the Software commercially.</h2>
-<h2>11. Sell products containing the Software.</h2>
-<h2>12. Sell modified versions of the Software.</h2>
-<h2>13. Use the Software in commercial organizations.</h2>
-<h2>14. Use the Software in educational institutions.</h2>
-<h2>15. Use the Software in government institutions.</h2>
-<h2>16. Use the Software in private or public organizations.</h2>
-<h2>17. Use the Software as part of a SaaS or cloud service.</h2>
-<h2>18. Incorporate the Software into proprietary or closed-source applications.</h2>
+1. Use the Software.
+2. Copy the Software.
+3. Study the Software.
+4. Modify the Software.
+5. Adapt the Software.
+6. Integrate the Software into other software.
+7. Create Derivative Works.
+8. Distribute the Software.
+9. Distribute Derivative Works.
+10. Use the Software commercially.
+11. Sell products containing the Software.
+12. Sell modified versions of the Software.
+13. Use the Software in commercial organizations.
+14. Use the Software in educational institutions.
+15. Use the Software in government institutions.
+16. Use the Software in private or public organizations.
+17. Use the Software as part of a SaaS or cloud service.
+18. Incorporate the Software into proprietary or closed-source applications.
 
 No additional commercial license is required solely because the Software is used commercially.
 
@@ -102,22 +102,22 @@ Section 4 is the core grant. It gives a free, worldwide, non-exclusive, royalty-
 
 ---
 
-<h2>5. Commercial Use</h2>
+## 5. Commercial Use
 
 Commercial use is expressly permitted.
 
 You may use the Software to:
 
-<h2>1. Build commercial applications.</h2>
-<h2>2. Build websites.</h2>
-<h2>3. Build enterprise systems.</h2>
-<h2>4. Build SaaS platforms.</h2>
-<h2>5. Provide paid services.</h2>
-<h2>6. Create commercial products.</h2>
-<h2>7. Create proprietary software.</h2>
-<h2>8. Create modified commercial versions.</h2>
-<h2>9. Sell products incorporating the Software.</h2>
-<h2>10. Charge customers for services powered by the Software.</h2>
+1. Build commercial applications.
+2. Build websites.
+3. Build enterprise systems.
+4. Build SaaS platforms.
+5. Provide paid services.
+6. Create commercial products.
+7. Create proprietary software.
+8. Create modified commercial versions.
+9. Sell products incorporating the Software.
+10. Charge customers for services powered by the Software.
 
 You are not required to pay royalties to the Original Author solely because you commercially use the Software.
 
@@ -127,21 +127,21 @@ This section removes any doubt about commercial use. It allows the Software to b
 
 ---
 
-<h2>6. Modification</h2>
+## 6. Modification
 
 You may modify the Software for any lawful purpose.
 
 You may:
 
-<h2>1. Rewrite portions of the Software.</h2>
-<h2>2. Add new functionality.</h2>
-<h2>3. Remove functionality.</h2>
-<h2>4. Optimize the Software.</h2>
-<h2>5. Integrate other technologies.</h2>
-<h2>6. Create a fork.</h2>
-<h2>7. Create a commercial derivative.</h2>
-<h2>8. Create a private derivative.</h2>
-<h2>9. Create a closed-source derivative.</h2>
+1. Rewrite portions of the Software.
+2. Add new functionality.
+3. Remove functionality.
+4. Optimize the Software.
+5. Integrate other technologies.
+6. Create a fork.
+7. Create a commercial derivative.
+8. Create a private derivative.
+9. Create a closed-source derivative.
 
 However, you MUST NOT remove, alter, obscure, or falsify existing copyright or authorship notices belonging to the Original Author or existing contributors.
 
@@ -156,7 +156,7 @@ This section separates modification rights from attribution obligations. You may
 
 ---
 
-<h2>7. Mandatory Attribution</h2>
+## 7. Mandatory Attribution
 
 If you distribute, publish, deploy, sell, or publicly present the Software or a Derivative Work, you must preserve appropriate attribution to the Original Author.
 
@@ -176,18 +176,18 @@ Attribution is mandatory whenever the Software or a derivative work is distribut
 
 ---
 
-<h2>8. Preservation of Author Information</h2>
+## 8. Preservation of Author Information
 
 You MUST NOT:
 
-<h2>1. Remove the Original Author's name.</h2>
-<h2>2. Replace the Original Author's name with another person's name.</h2>
-<h2>3. Change an original copyright notice to claim ownership.</h2>
-<h2>4. Delete existing copyright notices.</h2>
-<h2>5. Falsify authorship.</h2>
-<h2>6. Claim that you created the original Software.</h2>
-<h2>7. Hide the original author's identity for the purpose of claiming ownership.</h2>
-<h2>8. Alter attribution in a way that falsely represents the origin of the Software.</h2>
+1. Remove the Original Author's name.
+2. Replace the Original Author's name with another person's name.
+3. Change an original copyright notice to claim ownership.
+4. Delete existing copyright notices.
+5. Falsify authorship.
+6. Claim that you created the original Software.
+7. Hide the original author's identity for the purpose of claiming ownership.
+8. Alter attribution in a way that falsely represents the origin of the Software.
 
 You may add your own authorship information for your own original work.
 
@@ -195,7 +195,7 @@ This section prohibits specific actions that would erase or falsify the original
 
 ---
 
-<h2>9. Attribution Placement</h2>
+## 9. Attribution Placement
 
 Attribution may be provided in a reasonable location appropriate to the type of Software.
 
@@ -203,13 +203,13 @@ Acceptable locations may include:
 
 1. `LICENSE` file.
 2. `NOTICE` file.
-<h2>3. Documentation.</h2>
-<h2>4. About page.</h2>
-<h2>5. Credits page.</h2>
-<h2>6. Application information page.</h2>
-<h2>7. Website footer.</h2>
-<h2>8. Source-code attribution file.</h2>
-<h2>9. Project documentation.</h2>
+3. Documentation.
+4. About page.
+5. Credits page.
+6. Application information page.
+7. Website footer.
+8. Source-code attribution file.
+9. Project documentation.
 
 For source-code redistribution, the original copyright and license notices must remain included.
 
@@ -219,7 +219,7 @@ This section gives flexibility about where to place attribution, recognizing tha
 
 ---
 
-<h2>10. Closed-Source and Proprietary Software</h2>
+## 10. Closed-Source and Proprietary Software
 
 You may incorporate the Software into proprietary or closed-source software.
 
@@ -231,17 +231,17 @@ This section confirms that the license is not copyleft. You can incorporate the 
 
 ---
 
-<h2>11. SaaS and Cloud Use</h2>
+## 11. SaaS and Cloud Use
 
 You may use the Software in:
 
-<h2>1. SaaS platforms.</h2>
-<h2>2. Cloud applications.</h2>
-<h2>3. Web applications.</h2>
-<h2>4. APIs.</h2>
-<h2>5. Hosted services.</h2>
-<h2>6. Backend services.</h2>
-<h2>7. Commercial infrastructure.</h2>
+1. SaaS platforms.
+2. Cloud applications.
+3. Web applications.
+4. APIs.
+5. Hosted services.
+6. Backend services.
+7. Commercial infrastructure.
 
 No additional permission is required solely because the Software operates on a server or is delivered through a network.
 
@@ -251,19 +251,19 @@ This section addresses the use of Software in SaaS and cloud environments. It al
 
 ---
 
-<h2>12. Redistribution</h2>
+## 12. Redistribution
 
 You may redistribute the original Software or Derivative Works commercially or non-commercially.
 
 Redistribution is permitted provided that:
 
-<h2>1. This License is included.</h2>
-<h2>2. Existing copyright notices are preserved.</h2>
-<h2>3. Original author attribution is preserved.</h2>
-<h2>4. Existing contributor notices are preserved.</h2>
-<h2>5. You do not falsely claim original authorship.</h2>
-<h2>6. You do not imply official endorsement.</h2>
-<h2>7. You do not misuse the Original Author's trademarks.</h2>
+1. This License is included.
+2. Existing copyright notices are preserved.
+3. Original author attribution is preserved.
+4. Existing contributor notices are preserved.
+5. You do not falsely claim original authorship.
+6. You do not imply official endorsement.
+7. You do not misuse the Original Author's trademarks.
 
 You may charge any price for your own distribution, modifications, services, hosting, support, or products incorporating the Software.
 
@@ -271,7 +271,7 @@ This section governs redistribution. You may redistribute the Software or deriva
 
 ---
 
-<h2>13. Forks</h2>
+## 13. Forks
 
 You may create forks of the Software.
 
@@ -287,21 +287,21 @@ This section specifically permits forking. You can create a fork, modify it, ren
 
 ---
 
-<h2>14. Project Names and Branding</h2>
+## 14. Project Names and Branding
 
 Copyright permission does not grant permission to use the Original Project's branding.
 
 The following remain the property of their respective owners:
 
-<h2>1. Project names.</h2>
-<h2>2. Company names.</h2>
-<h2>3. Product names.</h2>
-<h2>4. Logos.</h2>
-<h2>5. Symbols.</h2>
-<h2>6. Brand identities.</h2>
-<h2>7. Domain names.</h2>
-<h2>8. Service marks.</h2>
-<h2>9. Trademarks.</h2>
+1. Project names.
+2. Company names.
+3. Product names.
+4. Logos.
+5. Symbols.
+6. Brand identities.
+7. Domain names.
+8. Service marks.
+9. Trademarks.
 
 Use of the Software does not grant ownership or licensing rights to these assets.
 
@@ -309,16 +309,16 @@ This section makes an important distinction between copyright and trademark. A c
 
 ---
 
-<h2>15. Trademark Restrictions</h2>
+## 15. Trademark Restrictions
 
 You MUST NOT use the Original Project's trademark or branding in a manner that:
 
-<h2>1. Suggests your product is official.</h2>
-<h2>2. Suggests endorsement by Henok Akriso.</h2>
-<h2>3. Suggests sponsorship by Henok Akriso.</h2>
-<h2>4. Suggests that your product is operated by Halziz.</h2>
-<h2>5. Creates confusion regarding the source of your product.</h2>
-<h2>6. Claims ownership of the Original Project's brand.</h2>
+1. Suggests your product is official.
+2. Suggests endorsement by Henok Akriso.
+3. Suggests sponsorship by Henok Akriso.
+4. Suggests that your product is operated by Halziz.
+5. Creates confusion regarding the source of your product.
+6. Claims ownership of the Original Project's brand.
 
 You may truthfully state:
 
@@ -334,7 +334,7 @@ This section lists prohibited uses of the Original Project's trademark or brandi
 
 ---
 
-<h2>16. Halziz Branding</h2>
+## 16. Halziz Branding
 
 The name Halziz, its logos, visual identity, and associated trademarks are not licensed under this Software License.
 
@@ -346,15 +346,15 @@ This section specifically protects the Halziz brand. The name Halziz, its logos,
 
 ---
 
-<h2>17. No False Endorsement</h2>
+## 17. No False Endorsement
 
 You may not claim or imply that:
 
-<h2>1. Henok Akriso endorses your product.</h2>
-<h2>2. Sergio endorses your product.</h2>
-<h2>3. Halziz endorses your product.</h2>
-<h2>4. Your product is an official ARWE product.</h2>
-<h2>5. Your product is an official release of the Original Project.</h2>
+1. Henok Akriso endorses your product.
+2. Sergio endorses your product.
+3. Halziz endorses your product.
+4. Your product is an official ARWE product.
+5. Your product is an official release of the Original Project.
 
 unless you have explicit authorization.
 
@@ -362,7 +362,7 @@ This section prohibits false endorsement. You cannot claim or imply that Henok A
 
 ---
 
-<h2>18. Third-Party Software</h2>
+## 18. Third-Party Software
 
 The Software may contain third-party components.
 
@@ -376,7 +376,7 @@ This section clarifies that the Software may include third-party components, and
 
 ---
 
-<h2>19. Contributions</h2>
+## 19. Contributions
 
 Unless a separate written agreement states otherwise, contributors retain copyright in their original contributions.
 
@@ -390,16 +390,16 @@ This section governs contributions. Contributors retain copyright in their origi
 
 ---
 
-<h2>20. Security Research</h2>
+## 20. Security Research
 
 This License does not prohibit legitimate:
 
-<h2>1. Security research.</h2>
-<h2>2. Vulnerability analysis.</h2>
-<h2>3. Defensive testing.</h2>
-<h2>4. Academic research.</h2>
-<h2>5. Code auditing.</h2>
-<h2>6. Responsible disclosure.</h2>
+1. Security research.
+2. Vulnerability analysis.
+3. Defensive testing.
+4. Academic research.
+5. Code auditing.
+6. Responsible disclosure.
 
 Nothing in this section authorizes unauthorized access to third-party systems or networks.
 
@@ -407,7 +407,7 @@ This section makes clear that legitimate security research, vulnerability analys
 
 ---
 
-<h2>21. No Warranty</h2>
+## 21. No Warranty
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -417,26 +417,26 @@ This section is a standard disclaimer of warranty. The Software is provided as i
 
 ---
 
-<h2>22. Limitation of Liability</h2>
+## 22. Limitation of Liability
 
 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, HENOK AKRISO, SERGIO, HALZIZ, CONTRIBUTORS, AND COPYRIGHT HOLDERS SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR OTHER DAMAGES ARISING FROM:
 
-<h2>1. Use of the Software.</h2>
-<h2>2. Inability to use the Software.</h2>
-<h2>3. Modification of the Software.</h2>
-<h2>4. Distribution of the Software.</h2>
-<h2>5. Deployment of the Software.</h2>
-<h2>6. Integration of the Software.</h2>
-<h2>7. Security vulnerabilities.</h2>
-<h2>8. Data loss.</h2>
-<h2>9. Business interruption.</h2>
-<h2>10. Loss of revenue.</h2>
+1. Use of the Software.
+2. Inability to use the Software.
+3. Modification of the Software.
+4. Distribution of the Software.
+5. Deployment of the Software.
+6. Integration of the Software.
+7. Security vulnerabilities.
+8. Data loss.
+9. Business interruption.
+10. Loss of revenue.
 
 This section limits liability. To the maximum extent permitted by law, the Original Author, Sergio, Halziz, contributors, and copyright holders are not liable for direct, indirect, incidental, special, consequential, exemplary, or other damages arising from use, inability to use, modification, distribution, deployment, integration, security vulnerabilities, data loss, business interruption, or loss of revenue. This protects the author from legal claims related to the Software's performance.
 
 ---
 
-<h2>23. License Termination</h2>
+## 23. License Termination
 
 Your rights under this License automatically terminate if you materially violate its terms.
 
@@ -450,18 +450,18 @@ This section describes termination. If you materially violate the license terms,
 
 ---
 
-<h2>24. License Compliance</h2>
+## 24. License Compliance
 
 If you discover that your use or distribution violates this License, you should promptly correct the violation.
 
 The Original Author may request correction of:
 
-<h2>1. Missing attribution.</h2>
-<h2>2. Removed copyright notices.</h2>
-<h2>3. False authorship.</h2>
-<h2>4. Unauthorized trademark use.</h2>
-<h2>5. False endorsement.</h2>
-<h2>6. Misrepresentation of an unofficial version as official.</h2>
+1. Missing attribution.
+2. Removed copyright notices.
+3. False authorship.
+4. Unauthorized trademark use.
+5. False endorsement.
+6. Misrepresentation of an unofficial version as official.
 
 Nothing in this section limits any rights or remedies available under applicable law.
 
@@ -469,26 +469,26 @@ This section encourages self-correction. If you discover that your use or distri
 
 ---
 
-<h2>25. Reservation of Rights</h2>
+## 25. Reservation of Rights
 
 All rights not expressly granted by this License are reserved.
 
 This includes, without limitation:
 
-<h2>1. Copyright ownership.</h2>
-<h2>2. Trademark ownership.</h2>
-<h2>3. Branding rights.</h2>
-<h2>4. Domain-name rights.</h2>
-<h2>5. Patent rights.</h2>
-<h2>6. Project identity.</h2>
-<h2>7. Commercial trademark licensing.</h2>
-<h2>8. Ownership of the original Software.</h2>
+1. Copyright ownership.
+2. Trademark ownership.
+3. Branding rights.
+4. Domain-name rights.
+5. Patent rights.
+6. Project identity.
+7. Commercial trademark licensing.
+8. Ownership of the original Software.
 
 This section states that all rights not expressly granted by the license are reserved. The list includes copyright ownership, trademark ownership, branding rights, domain-name rights, patent rights, project identity, commercial trademark licensing, and ownership of the original Software. This is a standard clause that prevents implied grants of rights beyond what the license explicitly provides.
 
 ---
 
-<h2>26. No Patent Grant</h2>
+## 26. No Patent Grant
 
 Except for any rights that may be unavoidable under applicable law, this License does not grant a patent license.
 
@@ -500,7 +500,7 @@ NOTE: NO PATENT GRANT DOES NOT MEAN YOU CANNOT USE THE SOFTWARE. IT DOES NOT MEA
 
 ---
 
-<h2>27. Governing Law</h2>
+## 27. Governing Law
 
 This License shall be interpreted and enforced according to applicable law.
 
@@ -512,7 +512,7 @@ This section addresses governing law. The license is interpreted and enforced ac
 
 ---
 
-<h2>28. Severability</h2>
+## 28. Severability
 
 If any provision of this License is determined to be invalid or unenforceable, the remaining provisions shall remain effective to the maximum extent permitted by law.
 
@@ -520,7 +520,7 @@ This is a standard severability clause. If any provision of the license is found
 
 ---
 
-<h2>29. Entire License</h2>
+## 29. Entire License
 
 This License constitutes the terms under which the Software is provided unless a separate written agreement expressly states otherwise.
 
@@ -530,7 +530,7 @@ This section states that the license constitutes the entire terms under which th
 
 ---
 
-<h2>30. License Notice</h2>
+## 30. License Notice
 
 Every distribution of the Software should retain a copy of this License.
 
@@ -548,7 +548,7 @@ This section specifies the required notices. Every distribution of the Software 
 
 ---
 
-<h2>31. License Summary</h2>
+## 31. License Summary
 
 | Right / Requirement | ARWE-PSL v1.0 |
 | ------------------- | ------------- |
@@ -581,7 +581,7 @@ This table provides a quick-reference summary of the license. It is not a substi
 
 ---
 
-<h2>32. Core Principle</h2>
+## 32. Core Principle
 
 The ARWE Public Source License is based on four principles:
 

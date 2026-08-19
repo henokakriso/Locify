@@ -1,10 +1,10 @@
-Locify
+# Locify
 
-Copyright © 2026 Henok Akriso. All rights reserved.
-Developer / Project Alias: Sergio
-Founder of Halziz
+**Copyright © 2026 Henok Akriso. All rights reserved.**
+**Developer / Project Alias:** Sergio
+**Founder of Halziz**
 
-Licensed under the ARWE Public Source License (ARWE-PSL) v1.0.
+Licensed under the **ARWE Public Source License (ARWE-PSL) v1.0**.
 
 "Locify" and "ARWE" are trademarks of the ARWE project
 (Henok Akriso). Use of these trademarks is limited to reasonable and

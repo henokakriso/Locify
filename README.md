@@ -199,6 +199,6 @@ Screenshots will be added here as the interface is finalized.
 
 ## License
 
-ARWE Public Source License (ARWE-PSL) v1.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+ARWE Public Source License (ARWE-PSL) v1.0 — see [LICENSE](LICENSE.md) and [NOTICE](NOTICE.md).
 
 Copyright © 2026 Henok Akriso. All rights reserved. Developer / Project Alias: Sergio — Founder of Halziz. "Locify" and "ARWE" are trademarks of the ARWE project; see the license for trademark terms.
