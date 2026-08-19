@@ -1,6 +1,17 @@
-# LOCIFY — Digital Kebele Platform
+# LOCIFY — Digital Kebele & Digital Identity
 
-## Overview
+**Locify** is a digital local-government platform designed to modernize
+Kebele-level public services and administrative workflows. It digitizes
+services such as residence certification, local letters and certificates,
+application submission, document requests, application tracking, appointments,
+notifications, and digitally generated records — connecting citizens with
+local government through a structured digital identity and service-management
+system while still supporting physical documents and manual processes.
+
+**Core vision:** Transform the Kebele into a modern digital public-service
+center.
+
+Part of [Project ARWE](https://github.com/henokakriso).
 
 LOCIFY is a lightweight, secure and offline-capable **Digital Kebele platform**
 built for Ethiopian government environments — including low-resource and
